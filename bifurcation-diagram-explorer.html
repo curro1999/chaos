@@ -86,10 +86,15 @@ td{color:var(--ink-2)}
 .portrait figcaption b{font-weight:700;color:var(--ink)}
 .portrait figcaption span{display:block;margin-top:4px;font-size:11px;color:var(--ink-3)}
 .portrait figcaption a{color:inherit}
-@media (max-width:600px){
-  .intro{grid-template-columns:minmax(0,1fr);gap:16px}
-  .portrait{flex-direction:row;align-items:flex-end;gap:14px}
-  .portrait img{width:120px;flex:none}
+@media (max-width:720px){
+  .intro{grid-template-columns:150px minmax(0,1fr);gap:22px}
+}
+@media (max-width:480px){
+  .intro{display:block}
+  .intro::after{content:"";display:block;clear:both}
+  .portrait{float:left;width:118px;margin:5px 16px 8px 0}
+  .intro-text{display:block}
+  .intro-text > * + *{margin-top:14px}
 }
 @media (max-width:600px){
   .sim{padding:16px}
@@ -119,8 +124,8 @@ td{color:var(--ink-2)}
     <h1>Period doubling and chaos</h1>
     <div class="intro">
       <figure class="portrait">
-        <img src="img/robert-may.jpg" width="320" height="427" alt="Robert May speaking at a public lecture, in a light blue shirt">
-        <figcaption><b>Robert M. May</b> (1936–2020), theoretical ecologist, at a public lecture at Harvard in 2009.<span>Photo: <a href="https://commons.wikimedia.org/wiki/File:BobMayHarvard_(cropped2).jpg">NBeale</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons. Resized.</span></figcaption>
+        <img src="img/robert-may.jpg" width="324" height="432" alt="Black-and-white photo of Robert May in an open-collar shirt">
+        <figcaption><b>Robert M. May</b> (1936–2020), theoretical ecologist.<span>Photo: <a href="https://commons.wikimedia.org/wiki/File:BobMayHarvard_(cropped2).jpg">NBeale</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons. Cropped and converted to black and white.</span></figcaption>
       </figure>
       <div class="intro-text">
         <p class="lede">Robert May's 1976 paper in Nature, “Simple mathematical models with very complicated dynamics”, followed one simple population rule as a single number, r, is turned up. The population first settles, then alternates between two values, then four, then eight, and finally never repeats at all.</p>

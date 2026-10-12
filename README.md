@@ -23,4 +23,4 @@ The code in this repository was generated with [Claude](https://claude.ai) (Anth
 
 Portrait of Edward Lorenz: American Geophysical Union (AGU), courtesy of AIP Emilio Segrè Visual Archives, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:EdwardLorenz.jpg).
 
-Photo of Robert May: NBeale, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:BobMayHarvard_(cropped2).jpg). Resized.
+Photo of Robert May: NBeale, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:BobMayHarvard_(cropped2).jpg). Cropped and converted to black and white; this version is shared under the same licence.
