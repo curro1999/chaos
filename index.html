@@ -5,15 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chaos Interactive Notes</title>
 <style>[hidden]{display:none!important}img{max-width:100%}</style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: one reading column. Context on top, the simulator in a single ruled panel, then the legend of values and the steps to try. */
 :root{
   --bg:#f1f3f5; --panel:#fbfcfd; --ink:#16202a; --ink-2:#45525f; --ink-3:#64707d;
   --rule:#d3d9df; --grid:#e4e8ec; --axis:#b9c2cb; --a:#1c5fc4; --b:#cf5417;
-  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
-  --font-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
-  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --font-display:Arial,Helvetica,sans-serif;
+  --font-body:Arial,Helvetica,sans-serif;
+  --font-mono:Arial,Helvetica,sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -30,8 +29,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-siz
 .page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
 .top{display:flex;flex-direction:column;gap:14px}
 .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
-h1{font-family:var(--font-display);font-weight:600;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
-h2{font-family:var(--font-display);font-weight:600;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:700;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
 p{margin:0;max-width:66ch}
 .formula{font-family:var(--font-mono);font-size:clamp(15px,3.6vw,19px);line-height:1.7;color:var(--ink);max-width:none}
 .formula small{display:block;font-size:13px;color:var(--ink-3)}
