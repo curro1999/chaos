@@ -16,3 +16,7 @@ Each page is a single self-contained HTML file with no build step.
 
 - R. M. May, "Simple mathematical models with very complicated dynamics", Nature 261, 459–467 (1976).
 - E. N. Lorenz, "Deterministic nonperiodic flow", Journal of the Atmospheric Sciences 20, 130–141 (1963).
+
+## Credits
+
+The code in this repository was generated with [Claude](https://claude.ai) (Anthropic).
