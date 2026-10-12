@@ -20,3 +20,5 @@ Each page is a single self-contained HTML file with no build step.
 ## Credits
 
 The code in this repository was generated with [Claude](https://claude.ai) (Anthropic).
+
+Portrait of Edward Lorenz: American Geophysical Union (AGU), courtesy of AIP Emilio Segrè Visual Archives, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:EdwardLorenz.jpg).

@@ -78,6 +78,18 @@ td{color:var(--ink-2)}
 .steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
 .steps b,.legend b{font-weight:600;color:var(--ink)}
 .foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+.intro{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;align-items:start;margin-top:6px}
+.intro-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.portrait{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.portrait img{display:block;width:100%;height:auto;border-radius:4px;border:1px solid var(--rule)}
+.portrait figcaption{font-size:13px;line-height:1.45;color:var(--ink-2)}
+.portrait figcaption b{font-weight:700;color:var(--ink)}
+.portrait figcaption span{display:block;margin-top:4px;font-size:11px;color:var(--ink-3)}
+@media (max-width:600px){
+  .intro{grid-template-columns:minmax(0,1fr);gap:16px}
+  .portrait{flex-direction:row;align-items:flex-end;gap:14px}
+  .portrait img{width:120px;flex:none}
+}
 @media (max-width:600px){
   .sim{padding:16px}
   .ctl{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l o" "s s";gap:4px 12px}
@@ -105,8 +117,16 @@ td{color:var(--ink-2)}
     <p class="eyebrow"><a href="./">Chaos theory · interactive notes</a></p>
     <h1>The Lorenz attractor</h1>
     <p class="formula">dx/dt = σ (y − x)<br>dy/dt = x (ρ − z) − y<br>dz/dt = x y − β z<small>with σ = 10, ρ = 28, β = 8/3</small></p>
-    <p class="lede">In 1961 the meteorologist Edward Lorenz reran a weather simulation and, to save time, typed in a starting value rounded from 0.506127 to 0.506. He expected the same weather. After a few simulated months the two runs had nothing in common. Two years later he reduced the problem to the three equations above, a stripped-down model of air heated from below.</p>
-    <p class="lede">This page repeats his accident. Two trajectories, A and B, start at almost the same point and obey exactly the same equations.</p>
+    <div class="intro">
+      <figure class="portrait">
+        <img src="img/edward-lorenz.jpg" width="320" height="460" alt="Black-and-white portrait of Edward Lorenz in a suit and tie">
+        <figcaption><b>Edward N. Lorenz</b> (1917–2008), meteorologist at MIT.<span>Photo: American Geophysical Union (AGU), courtesy of AIP Emilio Segrè Visual Archives.</span></figcaption>
+      </figure>
+      <div class="intro-text">
+        <p class="lede">In 1961 the meteorologist Edward Lorenz reran a weather simulation and, to save time, typed in a starting value rounded from 0.506127 to 0.506. He expected the same weather. After a few simulated months the two runs had nothing in common. Two years later he reduced the problem to the three equations above, a stripped-down model of air heated from below.</p>
+        <p class="lede">This page repeats his accident. Two trajectories, A and B, start at almost the same point and obey exactly the same equations.</p>
+      </div>
+    </div>
   </header>
 
   <section class="sim" aria-label="Lorenz system simulator">
