@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lorenz Twin Trajectories</title>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column. Context on top, the simulator in a single ruled panel, then the legend of values and the steps to try. */
+:root{
+  --bg:#f1f3f5; --panel:#fbfcfd; --ink:#16202a; --ink-2:#45525f; --ink-3:#64707d;
+  --rule:#d3d9df; --grid:#e4e8ec; --axis:#b9c2cb; --a:#1c5fc4; --b:#cf5417;
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --font-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+    --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+  --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;margin:0}
+.page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
+.top{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
+h1{font-family:var(--font-display);font-weight:600;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:600;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;max-width:66ch}
+.formula{font-family:var(--font-mono);font-size:clamp(15px,3.6vw,19px);line-height:1.7;color:var(--ink);max-width:none}
+.formula small{display:block;font-size:13px;color:var(--ink-3)}
+.lede{font-size:17px;color:var(--ink-2)}
+.block{display:flex;flex-direction:column;gap:18px}
+.sim{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.ctls{display:flex;flex-direction:column;gap:12px}
+.ctl{display:grid;grid-template-columns:180px minmax(0,1fr) 112px;grid-template-areas:"l s o";align-items:center;gap:12px}
+.ctl label{grid-area:l;font-size:14px;color:var(--ink-2)}
+.ctl input{grid-area:s;width:100%;margin:0;accent-color:var(--a)}
+.ctl output{grid-area:o;text-align:right;font-family:var(--font-mono);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--font-mono);font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--axis);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--grid)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.check input{accent-color:var(--b);width:16px;height:16px;margin:0}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.read{border-top:1px solid var(--rule);padding-top:10px;min-width:0}
+.read span{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.read strong{display:block;font-family:var(--font-display);font-weight:600;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2)}
+.key span{display:inline-flex;align-items:center}
+.sw{display:inline-block;width:22px;height:0;border-top:2px solid var(--a);margin-right:8px;vertical-align:middle;flex:none}
+.sw.b{border-top:2px dashed var(--b)}
+.sw.dot{width:9px;height:9px;border:0;border-radius:50%;background:var(--b)}
+.sw.sq{width:9px;height:9px;border:0;background:var(--a)}
+.cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);max-width:none}
+.fig{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plot{position:relative;width:100%}
+.plot canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{margin:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--rule)}
+.legend dt,.legend dd{margin:0;padding:12px 0;border-bottom:1px solid var(--rule)}
+.legend dt{font-family:var(--font-mono);font-size:13px;font-weight:500;padding-right:16px}
+.legend dd{color:var(--ink-2);font-size:15px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 16px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td:first-child{font-family:var(--font-mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+td{color:var(--ink-2)}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:32px minmax(0,1fr);max-width:70ch;color:var(--ink-2)}
+.steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
+.steps b,.legend b{font-weight:600;color:var(--ink)}
+.foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+@media (max-width:600px){
+  .sim{padding:16px}
+  .ctl{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l o" "s s";gap:4px 12px}
+  .legend{grid-template-columns:minmax(0,1fr)}
+  .legend dt{border-bottom:0;padding-bottom:0}
+  .legend dd{padding-top:4px}
+}
+.eyebrow a{color:inherit;text-decoration:none;border-bottom:1px solid var(--axis)}
+.eyebrow a:hover{color:var(--ink)}
+.notes{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.notes li{border-bottom:1px solid var(--rule)}
+.notes a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;align-items:baseline;padding:22px 0;color:inherit;text-decoration:none}
+.notes h2{grid-column:1}
+.notes .go{grid-column:2;font-family:var(--font-mono);font-size:13px;color:var(--a)}
+.notes .f,.notes p{grid-column:1 / -1}
+.notes .f{font-family:var(--font-mono);font-size:13px;color:var(--ink-3)}
+.notes p{color:var(--ink-2);font-size:15px}
+.notes a:hover h2{color:var(--a)}
+.notes a:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <p class="eyebrow"><a href="./">Chaos theory · interactive notes</a></p>
+    <h1>The Lorenz attractor</h1>
+    <p class="formula">dx/dt = σ (y − x)<br>dy/dt = x (ρ − z) − y<br>dz/dt = x y − β z<small>with σ = 10, ρ = 28, β = 8/3</small></p>
+    <p class="lede">In 1961 the meteorologist Edward Lorenz reran a weather simulation and, to save time, typed in a starting value rounded from 0.506127 to 0.506. He expected the same weather. After a few simulated months the two runs had nothing in common. Two years later he reduced the problem to the three equations above, a stripped-down model of air heated from below.</p>
+    <p class="lede">This page repeats his accident. Two trajectories, A and B, start at almost the same point and obey exactly the same equations.</p>
+  </header>
+
+  <section class="sim" aria-label="Lorenz system simulator">
+    <div class="ctls">
+      <div class="ctl">
+        <label for="k">Initial difference</label>
+        <input type="range" id="k" min="1" max="10" step="1" value="6">
+        <output id="k-out" for="k">0.000001</output>
+      </div>
+      <div class="ctl">
+        <label for="sp">Playback speed</label>
+        <input type="range" id="sp" min="1" max="20" step="1" value="6">
+        <output id="sp-out" for="sp">Normal</output>
+      </div>
+    </div>
+    <div class="row">
+      <button type="button" id="pp">Pause</button>
+      <button type="button" id="rs">Restart</button>
+    </div>
+    <div class="reads">
+      <div class="read"><span>Time (of 200)</span><strong id="m-t">0.0</strong></div>
+      <div class="read"><span>Distance between A and B</span><strong id="m-d">0</strong></div>
+      <div class="read"><span>Split at time</span><strong id="m-s">Not yet</strong></div>
+    </div>
+    <div class="key">
+      <span><i class="sw"></i>Trajectory A</span>
+      <span><i class="sw b"></i>Trajectory B, shifted by the initial difference</span>
+    </div>
+    <div class="fig">
+      <p class="cap">Top chart, the attractor. Horizontal: x. Vertical: z. No time axis: the dots are the present, the lines are the last 30 time units.</p>
+      <div class="plot" style="height:370px">
+        <canvas id="att" role="img" aria-label="The Lorenz attractor drawn in the x–z plane: two trajectories tracing a two-lobed butterfly shape">Two trajectories on the Lorenz attractor.</canvas>
+      </div>
+    </div>
+    <div class="fig">
+      <p class="cap">Bottom chart, x against time, last 40 time units. Above zero is the right wing, below zero the left wing.</p>
+      <div class="plot" style="height:190px">
+        <canvas id="ts" role="img" aria-label="x against time for both trajectories: they coincide at first and later diverge">x against time for both trajectories.</canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What the values mean</h2>
+    <dl class="legend">
+      <dt>x, y, z</dt>
+      <dd>The three numbers that describe the state of the model at any instant. In Lorenz's convection model, x is how fast the air is turning over, y is the temperature difference between rising and sinking air, and z measures how far the vertical temperature profile is from a straight line.</dd>
+      <dt>Top chart</dt>
+      <dd>A map of the state with no time axis. Horizontal is x, vertical is z, and y points towards you, so it is hidden. Time shows up only as movement.</dd>
+      <dt>Bottom chart</dt>
+      <dd>The same motion with a time axis. Horizontal is time and vertical is x alone. Each loop around a wing is one ripple, and each crossing of zero is a jump from one wing to the other.</dd>
+      <dt><i class="sw"></i>Trajectory A</dt>
+      <dd>The reference run.</dd>
+      <dt><i class="sw b"></i>Trajectory B</dt>
+      <dd>Starts at the same point as A, shifted in x by the initial difference. Nothing else is different.</dd>
+      <dt>Initial difference</dt>
+      <dd>The gap in x between A and B at time 0. The slider goes from 0.1 down to 0.0000000001.</dd>
+      <dt>Playback speed</dt>
+      <dd>How fast the run is played back. It does not change the result.</dd>
+      <dt>Time</dt>
+      <dd>Model time, in the equations' own units. The run ends at 200.</dd>
+      <dt>Distance between A and B</dt>
+      <dd>The straight-line distance between the two dots in x, y, z space. For scale, the whole butterfly is about 40 units wide.</dd>
+      <dt>Split at time</dt>
+      <dd>The first moment that distance passes 1. It is marked with a dotted vertical line on the bottom chart.</dd>
+    </dl>
+  </section>
+
+  <section class="block">
+    <h2>What to watch</h2>
+    <ol class="steps">
+      <li><span><b>At the start, A and B look like one line.</b> Keep an eye on the distance readout. It is tiny, but it multiplies by roughly 2.5 with every unit of time.</span></li>
+      <li><span><b>Then comes the split.</b> One trajectory circles a wing once more while the other crosses over. From then on they are unrelated. The bottom chart shows the exact moment.</span></li>
+      <li><span><b>Drag the initial difference</b> to make it ten times smaller, then ten times smaller again. Each extra zero delays the split by only two or three time units. This is why better instruments barely extend a weather forecast.</span></li>
+      <li><span><b>Let it run.</b> After the split the two lines in the bottom chart sometimes cross, but they never fall back into step.</span></li>
+      <li><span><b>Look at the top chart again.</b> Both trajectories still trace the same butterfly. You cannot say where a trajectory will be, but you do know the shape it will be on. That shape is the attractor.</span></li>
+    </ol>
+  </section>
+
+  <section class="block">
+    <h2>About the name</h2>
+    <p>The term “butterfly effect” comes from a 1972 talk in which Lorenz asked whether the flap of a butterfly's wings in Brazil could set off a tornado in Texas. That the attractor also looks like a butterfly is a happy coincidence.</p>
+  </section>
+
+  <p class="foot">Source: E. N. Lorenz, “Deterministic nonperiodic flow”, Journal of the Atmospheric Sciences 20, 130–141 (1963). Integrated here with a fourth-order Runge–Kutta method and a time step of 0.005.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const MONO='12px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+function pal(){const s=getComputedStyle(document.documentElement),v=n=>s.getPropertyValue(n).trim();return {a:v('--a'),b:v('--b'),grid:v('--grid'),axis:v('--axis'),tick:v('--ink-3'),ink:v('--ink')};}
+function fit(c){const w=c.parentElement.clientWidth,h=c.parentElement.clientHeight,d=window.devicePixelRatio||1;c.width=Math.max(1,Math.round(w*d));c.height=Math.max(1,Math.round(h*d));const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);return {ctx,w,h,d};}
+function onChange(cb){let t;const run=()=>{clearTimeout(t);t=setTimeout(cb,80);};window.addEventListener('resize',run);matchMedia('(prefers-color-scheme: dark)').addEventListener('change',run);new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run);}
+function path(c,pts,from,X,Y,col,dash,wd){c.beginPath();c.setLineDash(dash);c.strokeStyle=col;c.lineWidth=wd;c.lineJoin='round';c.lineCap='round';for(let i=from;i<pts.length;i++){const x=X(pts[i],i),y=Y(pts[i],i);if(i>from)c.lineTo(x,y);else c.moveTo(x,y);}c.stroke();c.setLineDash([]);}
+function disc(c,x,y,r,col){c.beginPath();c.fillStyle=col;c.arc(x,y,r,0,Math.PI*2);c.fill();}
+function longRun(r){let x=0.5;for(let i=0;i<6000;i++)x=r*x*(1-x);const v=[];for(let i=0;i<192;i++){x=r*x*(1-x);v.push(x);}return v;}
+function period(v){for(let p=1;p<=64;p++){let ok=true;for(let n=0;n+p<v.length;n++){if(Math.abs(v[n+p]-v[n])>1e-5){ok=false;break;}}if(ok)return p;}return 0;}
+
+(function(){
+const S=10,RHO=28,BETA=8/3,dt=0.005,TMAX=200,WIN=40,TRAIL=6000,NMAX=Math.round(TMAX/dt);
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function f(p){return [S*(p[1]-p[0]),p[0]*(RHO-p[2])-p[1],p[0]*p[1]-BETA*p[2]];}
+function ad(p,k,h){return [p[0]+k[0]*h,p[1]+k[1]*h,p[2]+k[2]*h];}
+function rk(p){const a=f(p),b=f(ad(p,a,dt/2)),c=f(ad(p,b,dt/2)),d=f(ad(p,c,dt));return [p[0]+dt/6*(a[0]+2*b[0]+2*c[0]+d[0]),p[1]+dt/6*(a[1]+2*b[1]+2*c[1]+d[1]),p[2]+dt/6*(a[2]+2*b[2]+2*c[2]+d[2])];}
+let start=[1,1,1];for(let i=0;i<3000;i++)start=rk(start);
+const top=$('att'),bot=$('ts'),kEl=$('k'),spEl=$('sp'),pp=$('pp');
+let g1=fit(top),g2=fit(bot),P=pal(),A,Bq,running=false,done=false,sepT=null,raf=null,spf=6;
+function fmtD(d){if(d>=0.01)return d.toFixed(2);if(d<=0)return '0';return d.toFixed(Math.min(12,Math.ceil(-Math.log10(d))+1));}
+function spLabel(v){return v<=3?'Slow':v<=9?'Normal':v<=15?'Fast':'Very fast';}
+function label(){pp.textContent=done?'Run again':running?'Pause':(A.length>1?'Resume':'Start');}
+function kick(){if(raf===null)raf=requestAnimationFrame(frame);}
+function reset(auto){
+  const k=parseInt(kEl.value,10),delta=Math.pow(10,-k);
+  $('k-out').textContent=delta.toFixed(k);
+  A=[start.slice()];Bq=[[start[0]+delta,start[1],start[2]]];
+  done=false;sepT=null;$('m-s').textContent='Not yet';
+  running=auto;label();kick();
+}
+function drawTop(){
+  const c=g1.ctx,w=g1.w,h=g1.h,L=40,R=12,T=24,B=30,pw=w-L-R,ph=h-T-B;
+  const sc=Math.min(pw/46,ph/50),cx=L+pw/2,by=T+ph-(ph-50*sc)/2;
+  const X=p=>cx+p[0]*sc,Y=p=>by-p[2]*sc;
+  c.clearRect(0,0,w,h);c.font=MONO;c.lineWidth=1;
+  c.textAlign='right';c.textBaseline='middle';
+  [0,10,20,30,40,50].forEach(z=>{const y=by-z*sc;c.strokeStyle=z===0?P.axis:P.grid;c.beginPath();c.moveTo(cx-23*sc,y);c.lineTo(cx+23*sc,y);c.stroke();c.fillStyle=P.tick;c.fillText(String(z),cx-23*sc-8,y);});
+  c.strokeStyle=P.axis;c.setLineDash([2,4]);c.beginPath();c.moveTo(cx,by);c.lineTo(cx,by-50*sc);c.stroke();c.setLineDash([]);
+  c.textAlign='center';c.textBaseline='top';c.fillStyle=P.tick;
+  [-20,-10,0,10,20].forEach(x=>c.fillText(String(x).replace('-','−'),cx+x*sc,by+8));
+  c.textBaseline='bottom';
+  c.fillText('left wing',cx-11.5*sc,by-50*sc-6);c.fillText('right wing',cx+11.5*sc,by-50*sc-6);
+  const n=A.length,from=Math.max(0,n-TRAIL);
+  path(c,A,from,X,Y,P.a,[],1.5);path(c,Bq,from,X,Y,P.b,[6,5],1.5);
+  const la=A[n-1],lb=Bq[n-1];
+  disc(c,X(la),Y(la),5,P.a);disc(c,X(lb),Y(lb),5,P.b);
+}
+function drawBot(){
+  const c=g2.ctx,w=g2.w,h=g2.h,L=40,R=12,T=16,B=42,pw=w-L-R,ph=h-T-B;
+  const n=A.length,t=(n-1)*dt,t0=Math.max(0,t-WIN),i0=Math.max(0,Math.floor(t0/dt));
+  const X=(p,i)=>L+((i*dt-t0)/WIN)*pw,Y=p=>T+ph/2-p[0]*(ph/2)/22;
+  c.clearRect(0,0,w,h);c.font=MONO;c.lineWidth=1;
+  c.textAlign='right';c.textBaseline='middle';
+  [-20,0,20].forEach(v=>{const y=T+ph/2-v*(ph/2)/22;c.strokeStyle=v===0?P.axis:P.grid;c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.fillStyle=P.tick;c.fillText(String(v).replace('-','−'),L-8,y);});
+  c.textAlign='center';c.textBaseline='top';c.fillStyle=P.tick;
+  for(let v=Math.ceil(t0/10)*10;v<=t0+WIN+0.001;v+=10)c.fillText(String(v),L+(v-t0)/WIN*pw,T+ph+8);
+  c.fillText('time',L+pw/2,T+ph+25);
+  if(sepT!==null&&sepT>=t0){const x=L+(sepT-t0)/WIN*pw;c.strokeStyle=P.tick;c.setLineDash([2,3]);c.beginPath();c.moveTo(x,T);c.lineTo(x,T+ph);c.stroke();c.setLineDash([]);c.textBaseline='bottom';c.textAlign=x>L+pw-30?'right':x<L+30?'left':'center';c.fillText('split',x,T-3);}
+  path(c,A,i0,X,Y,P.a,[],1.5);path(c,Bq,i0,X,Y,P.b,[6,5],1.5);
+}
+function draw(){
+  drawTop();drawBot();
+  const n=A.length,la=A[n-1],lb=Bq[n-1];
+  $('m-t').textContent=((n-1)*dt).toFixed(1);
+  $('m-d').textContent=fmtD(Math.hypot(la[0]-lb[0],la[1]-lb[1],la[2]-lb[2]));
+}
+function frame(){
+  raf=null;
+  if(running&&!done){
+    for(let i=0;i<spf&&A.length<=NMAX;i++){
+      const a=rk(A[A.length-1]),b=rk(Bq[Bq.length-1]);A.push(a);Bq.push(b);
+      if(sepT===null&&Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])>1){sepT=(A.length-1)*dt;$('m-s').textContent=sepT.toFixed(1);}
+    }
+    if(A.length>NMAX){done=true;running=false;label();}
+  }
+  draw();
+  if(running&&!done)raf=requestAnimationFrame(frame);
+}
+pp.addEventListener('click',()=>{if(done){reset(true);return;}running=!running;label();kick();});
+$('rs').addEventListener('click',()=>reset(true));
+kEl.addEventListener('input',()=>reset(!reduced));
+spEl.addEventListener('input',()=>{spf=parseInt(spEl.value,10);$('sp-out').textContent=spLabel(spf);});
+onChange(()=>{g1=fit(top);g2=fit(bot);P=pal();kick();});
+reset(!reduced);
+})();
+</script>
+
+</body>
+</html>

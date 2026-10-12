@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bifurcation Diagram Explorer</title>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column. Context on top, the simulator in a single ruled panel, then the legend of values and the steps to try. */
+:root{
+  --bg:#f1f3f5; --panel:#fbfcfd; --ink:#16202a; --ink-2:#45525f; --ink-3:#64707d;
+  --rule:#d3d9df; --grid:#e4e8ec; --axis:#b9c2cb; --a:#1c5fc4; --b:#cf5417;
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --font-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+    --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+  --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;margin:0}
+.page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
+.top{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
+h1{font-family:var(--font-display);font-weight:600;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:600;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;max-width:66ch}
+.formula{font-family:var(--font-mono);font-size:clamp(15px,3.6vw,19px);line-height:1.7;color:var(--ink);max-width:none}
+.formula small{display:block;font-size:13px;color:var(--ink-3)}
+.lede{font-size:17px;color:var(--ink-2)}
+.block{display:flex;flex-direction:column;gap:18px}
+.sim{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.ctls{display:flex;flex-direction:column;gap:12px}
+.ctl{display:grid;grid-template-columns:180px minmax(0,1fr) 112px;grid-template-areas:"l s o";align-items:center;gap:12px}
+.ctl label{grid-area:l;font-size:14px;color:var(--ink-2)}
+.ctl input{grid-area:s;width:100%;margin:0;accent-color:var(--a)}
+.ctl output{grid-area:o;text-align:right;font-family:var(--font-mono);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--font-mono);font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--axis);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--grid)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.check input{accent-color:var(--b);width:16px;height:16px;margin:0}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.read{border-top:1px solid var(--rule);padding-top:10px;min-width:0}
+.read span{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.read strong{display:block;font-family:var(--font-display);font-weight:600;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2)}
+.key span{display:inline-flex;align-items:center}
+.sw{display:inline-block;width:22px;height:0;border-top:2px solid var(--a);margin-right:8px;vertical-align:middle;flex:none}
+.sw.b{border-top:2px dashed var(--b)}
+.sw.dot{width:9px;height:9px;border:0;border-radius:50%;background:var(--b)}
+.sw.sq{width:9px;height:9px;border:0;background:var(--a)}
+.cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);max-width:none}
+.fig{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plot{position:relative;width:100%}
+.plot canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{margin:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--rule)}
+.legend dt,.legend dd{margin:0;padding:12px 0;border-bottom:1px solid var(--rule)}
+.legend dt{font-family:var(--font-mono);font-size:13px;font-weight:500;padding-right:16px}
+.legend dd{color:var(--ink-2);font-size:15px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 16px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td:first-child{font-family:var(--font-mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+td{color:var(--ink-2)}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:32px minmax(0,1fr);max-width:70ch;color:var(--ink-2)}
+.steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
+.steps b,.legend b{font-weight:600;color:var(--ink)}
+.foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+@media (max-width:600px){
+  .sim{padding:16px}
+  .ctl{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l o" "s s";gap:4px 12px}
+  .legend{grid-template-columns:minmax(0,1fr)}
+  .legend dt{border-bottom:0;padding-bottom:0}
+  .legend dd{padding-top:4px}
+}
+.eyebrow a{color:inherit;text-decoration:none;border-bottom:1px solid var(--axis)}
+.eyebrow a:hover{color:var(--ink)}
+.notes{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.notes li{border-bottom:1px solid var(--rule)}
+.notes a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;align-items:baseline;padding:22px 0;color:inherit;text-decoration:none}
+.notes h2{grid-column:1}
+.notes .go{grid-column:2;font-family:var(--font-mono);font-size:13px;color:var(--a)}
+.notes .f,.notes p{grid-column:1 / -1}
+.notes .f{font-family:var(--font-mono);font-size:13px;color:var(--ink-3)}
+.notes p{color:var(--ink-2);font-size:15px}
+.notes a:hover h2{color:var(--a)}
+.notes a:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <p class="eyebrow"><a href="./">Chaos theory · interactive notes</a></p>
+    <h1>Period doubling and chaos</h1>
+    <p class="formula">x<sub>next</sub> = r · x · (1 − x)</p>
+    <p class="lede">Robert May's 1976 paper in Nature, “Simple mathematical models with very complicated dynamics”, followed this one population rule as a single number, r, is turned up. The population first settles, then alternates between two values, then four, then eight, and finally never repeats at all.</p>
+    <p class="lede">The diagram below is that whole story in one picture. Every horizontal position is a value of r. The dots above it are the values the population keeps visiting once it has settled down.</p>
+  </header>
+
+  <section class="sim" aria-label="Bifurcation diagram explorer">
+    <div class="ctls">
+      <div class="ctl">
+        <label for="r">Growth parameter r</label>
+        <input type="range" id="r" min="2.5" max="4" step="0.001" value="2.8">
+        <output id="r-out" for="r">2.800</output>
+      </div>
+    </div>
+    <div class="row">
+      <button type="button" data-z="all" aria-pressed="true">Full view</button>
+      <button type="button" data-z="casc" aria-pressed="false">Period-doubling cascade</button>
+      <button type="button" data-z="win" aria-pressed="false">Period-3 window</button>
+    </div>
+    <div class="reads">
+      <div class="read"><span>Behaviour at this r</span><strong id="m-b">Settles on one value</strong></div>
+      <div class="read"><span>Values visited</span><strong id="m-n">1</strong></div>
+    </div>
+    <div class="key">
+      <span><i class="sw sq"></i>Long-run values of x for every r</span>
+      <span><i class="sw dot"></i>The r you chose, and the values it visits</span>
+    </div>
+    <div class="fig">
+      <p class="cap">Bifurcation diagram. Horizontal: r. Vertical: population x. Drag across it to choose r.</p>
+      <div class="plot" style="height:350px">
+        <canvas id="bif" role="img" aria-label="Bifurcation diagram of the logistic map: a single line that forks into two, four and eight branches and then becomes a chaotic cloud as r increases" style="touch-action:pan-y;cursor:ew-resize">Bifurcation diagram of the logistic map.</canvas>
+      </div>
+    </div>
+    <div class="fig">
+      <p class="cap">The population generation by generation at the chosen r, starting from x = 0.2.</p>
+      <div class="plot" style="height:190px">
+        <canvas id="ser" role="img" aria-label="Population x over 80 generations at the chosen value of r">Population over 80 generations.</canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What the values mean</h2>
+    <dl class="legend">
+      <dt>r · horizontal axis</dt>
+      <dd>The growth parameter: how many times the population would multiply each generation if nothing held it back.</dd>
+      <dt>x · vertical axis</dt>
+      <dd>The population as a fraction of the maximum the environment can hold, from 0 (extinct) to 1 (full).</dd>
+      <dt><i class="sw sq"></i>Blue dots</dt>
+      <dd>For each r the rule is run for 500 generations, which are thrown away, and the next 260 values are plotted. One dot above an r means a steady population. Two dots mean it alternates. A vertical smear means chaos.</dd>
+      <dt><i class="sw dot"></i>Orange line and dots</dt>
+      <dd>The r you have chosen and the values the population visits there. Use the slider or drag across the diagram.</dd>
+      <dt>Bottom chart</dt>
+      <dd>The population over 80 generations at the chosen r. The heights it ends up at are the orange dots in the diagram, seen as a sequence in time.</dd>
+      <dt>Behaviour</dt>
+      <dd>Whether the population settles, repeats in a cycle, or never repeats, checked by running the rule for several thousand generations.</dd>
+      <dt>Values visited</dt>
+      <dd>How many different values the population cycles through in the long run.</dd>
+    </dl>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Landmark r</th><th>What happens there</th></tr></thead>
+        <tbody>
+          <tr><td>3</td><td>First period doubling: one value becomes two.</td></tr>
+          <tr><td>3.449</td><td>Second doubling: two values become four.</td></tr>
+          <tr><td>3.544</td><td>Third doubling: four become eight.</td></tr>
+          <tr><td>3.570</td><td>The doublings pile up and chaos begins.</td></tr>
+          <tr><td>3.828</td><td>The period-3 window opens: order returns for a short stretch.</td></tr>
+          <tr><td>4</td><td>The largest r for which x stays between 0 and 1.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What to try</h2>
+    <ol class="steps">
+      <li><span><b>Drag from 2.5 to 3.</b> There is one line, so the population settles on one value. The bottom curve flattens.</span></li>
+      <li><span><b>Cross 3.</b> The line forks in two and the bottom chart becomes a zigzag: a high generation, a low one. This is the first period doubling.</span></li>
+      <li><span><b>Continue to about 3.45, then 3.55.</b> Each branch forks again, giving 4 values and then 8. Notice that each fork arrives sooner than the last.</span></li>
+      <li><span>Press <b>Period-doubling cascade</b>. The forks crowd together like a countdown. Each stretch is about 4.669 times shorter than the one before. That ratio is the Feigenbaum constant, and it turns up in many unrelated systems. Infinitely many doublings fit before r ≈ 3.570.</span></li>
+      <li><span>Press <b>Full view</b> and look to the right of 3.57. The cloud is chaos: the population never repeats. It is not uniform, though. There are pale vertical gaps.</span></li>
+      <li><span>Press <b>Period-3 window</b>. Near 3.83 the chaos suddenly gives way to a clean cycle of 3 values. Each of the three branches then forks into 6, 12 and so on, replaying the whole diagram in miniature.</span></li>
+    </ol>
+  </section>
+
+  <p class="foot">Source: R. M. May, “Simple mathematical models with very complicated dynamics”, Nature 261, 459–467 (1976).</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const MONO='12px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+function pal(){const s=getComputedStyle(document.documentElement),v=n=>s.getPropertyValue(n).trim();return {a:v('--a'),b:v('--b'),grid:v('--grid'),axis:v('--axis'),tick:v('--ink-3'),ink:v('--ink')};}
+function fit(c){const w=c.parentElement.clientWidth,h=c.parentElement.clientHeight,d=window.devicePixelRatio||1;c.width=Math.max(1,Math.round(w*d));c.height=Math.max(1,Math.round(h*d));const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);return {ctx,w,h,d};}
+function onChange(cb){let t;const run=()=>{clearTimeout(t);t=setTimeout(cb,80);};window.addEventListener('resize',run);matchMedia('(prefers-color-scheme: dark)').addEventListener('change',run);new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run);}
+function path(c,pts,from,X,Y,col,dash,wd){c.beginPath();c.setLineDash(dash);c.strokeStyle=col;c.lineWidth=wd;c.lineJoin='round';c.lineCap='round';for(let i=from;i<pts.length;i++){const x=X(pts[i],i),y=Y(pts[i],i);if(i>from)c.lineTo(x,y);else c.moveTo(x,y);}c.stroke();c.setLineDash([]);}
+function disc(c,x,y,r,col){c.beginPath();c.fillStyle=col;c.arc(x,y,r,0,Math.PI*2);c.fill();}
+function longRun(r){let x=0.5;for(let i=0;i<6000;i++)x=r*x*(1-x);const v=[];for(let i=0;i<192;i++){x=r*x*(1-x);v.push(x);}return v;}
+function period(v){for(let p=1;p<=64;p++){let ok=true;for(let n=0;n+p<v.length;n++){if(Math.abs(v[n+p]-v[n])>1e-5){ok=false;break;}}if(ok)return p;}return 0;}
+
+(function(){
+const Z={
+  all:{r0:2.5,r1:4,step:0.001,dec:3,ticks:[2.5,3,3.5,4],td:1,home:2.8},
+  casc:{r0:3.4,r1:3.6,step:0.0002,dec:4,ticks:[3.4,3.45,3.5,3.55,3.6],td:2,home:3.5},
+  win:{r0:3.82,r1:3.86,step:0.00005,dec:5,ticks:[3.82,3.83,3.84,3.85,3.86],td:2,home:3.835}
+};
+const L=44,R=14,T=12,B=42,G=80;
+const bif=$('bif'),ser=$('ser'),rEl=$('r');
+let g1=fit(bif),g2=fit(ser),P=pal(),off=null,cur='all',drag=false;
+function build(){
+  const z=Z[cur],pw=g1.w-L-R,ph=g1.h-T-B;
+  off=document.createElement('canvas');off.width=Math.max(2,Math.round(pw*g1.d));off.height=Math.max(2,Math.round(ph*g1.d));
+  const o=off.getContext('2d'),W=off.width,H=off.height;o.fillStyle=P.a;o.globalAlpha=0.35;
+  for(let c=0;c<W;c++){const r=z.r0+(z.r1-z.r0)*c/(W-1);let x=0.5;for(let i=0;i<500;i++)x=r*x*(1-x);for(let i=0;i<260;i++){x=r*x*(1-x);o.fillRect(c,Math.round((1-x)*(H-1)),1,1);}}
+}
+function axes(c,w,h,xt,xf,xl){
+  const pw=w-L-R,ph=h-T-B;
+  c.clearRect(0,0,w,h);c.font=MONO;c.lineWidth=1;
+  c.textAlign='right';c.textBaseline='middle';
+  [0,0.25,0.5,0.75,1].forEach(v=>{const y=T+(1-v)*ph;c.strokeStyle=v===0?P.axis:P.grid;c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.fillStyle=P.tick;c.fillText(v.toFixed(2),L-8,y);});
+  c.textAlign='center';c.textBaseline='top';c.fillStyle=P.tick;
+  xt.forEach(t=>c.fillText(t[1],L+xf(t[0])*pw,T+ph+8));
+  c.fillText(xl,L+pw/2,T+ph+25);
+}
+function draw(){
+  const z=Z[cur],r=parseFloat(rEl.value);
+  $('r-out').textContent=r.toFixed(z.dec);
+  const v=longRun(r),p=period(v);
+  $('m-b').textContent=p===1?'Settles on one value':p>1?'Cycle of '+p+' values':'Chaos';
+  $('m-n').textContent=p>0?String(p):'Endless, never repeating';
+  let c=g1.ctx,w=g1.w,h=g1.h,pw=w-L-R,ph=h-T-B;
+  axes(c,w,h,z.ticks.map(t=>[t,t.toFixed(z.td)]),t=>(t-z.r0)/(z.r1-z.r0),'r');
+  if(off)c.drawImage(off,L,T,pw,ph);
+  const mx=L+(r-z.r0)/(z.r1-z.r0)*pw;
+  c.strokeStyle=P.b;c.lineWidth=1;c.beginPath();c.moveTo(mx,T);c.lineTo(mx,T+ph);c.stroke();
+  (p>0?v.slice(0,p):v).forEach(x=>disc(c,mx,T+(1-x)*ph,3.5,P.b));
+  c=g2.ctx;w=g2.w;h=g2.h;pw=w-L-R;ph=h-T-B;
+  axes(c,w,h,[0,20,40,60,80].map(t=>[t,String(t)]),t=>t/G,'generation');
+  let x=0.2;const s=[x];for(let i=0;i<G;i++){x=r*x*(1-x);s.push(x);}
+  const X=(q,i)=>L+i/G*pw,Y=q=>T+(1-q)*ph;
+  path(c,s,0,X,Y,P.b,[],1.5);
+  s.forEach((q,i)=>disc(c,X(q,i),Y(q),2.2,P.b));
+}
+function zoom(k){
+  cur=k;const z=Z[k];let r=parseFloat(rEl.value);if(r<z.r0||r>z.r1)r=z.home;
+  rEl.min=z.r0;rEl.max=z.r1;rEl.step=z.step;rEl.value=r;
+  document.querySelectorAll('button[data-z]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.z===k?'true':'false'));
+  build();draw();
+}
+function fromPtr(e){const z=Z[cur],b=bif.getBoundingClientRect(),pw=g1.w-L-R;let t=(e.clientX-b.left-L)/pw;t=Math.max(0,Math.min(1,t));rEl.value=(z.r0+(z.r1-z.r0)*t).toFixed(5);draw();}
+bif.addEventListener('pointerdown',e=>{drag=true;try{bif.setPointerCapture(e.pointerId);}catch(err){}fromPtr(e);});
+bif.addEventListener('pointermove',e=>{if(drag)fromPtr(e);});
+bif.addEventListener('pointerup',()=>{drag=false;});
+bif.addEventListener('pointercancel',()=>{drag=false;});
+rEl.addEventListener('input',draw);
+document.querySelectorAll('button[data-z]').forEach(b=>b.addEventListener('click',()=>zoom(b.dataset.z)));
+onChange(()=>{g1=fit(bif);g2=fit(ser);P=pal();build();draw();});
+build();draw();
+})();
+</script>
+
+</body>
+</html>
