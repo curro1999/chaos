@@ -78,6 +78,19 @@ td{color:var(--ink-2)}
 .steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
 .steps b,.legend b{font-weight:600;color:var(--ink)}
 .foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+.intro{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;align-items:start;margin-top:6px}
+.intro-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.portrait{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.portrait img{display:block;width:100%;height:auto;border-radius:4px;border:1px solid var(--rule)}
+.portrait figcaption{font-size:13px;line-height:1.45;color:var(--ink-2)}
+.portrait figcaption b{font-weight:700;color:var(--ink)}
+.portrait figcaption span{display:block;margin-top:4px;font-size:11px;color:var(--ink-3)}
+.portrait figcaption a{color:inherit}
+@media (max-width:600px){
+  .intro{grid-template-columns:minmax(0,1fr);gap:16px}
+  .portrait{flex-direction:row;align-items:flex-end;gap:14px}
+  .portrait img{width:120px;flex:none}
+}
 @media (max-width:600px){
   .sim{padding:16px}
   .ctl{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l o" "s s";gap:4px 12px}
@@ -104,9 +117,17 @@ td{color:var(--ink-2)}
   <header class="top">
     <p class="eyebrow"><a href="./">Chaos theory · interactive notes</a></p>
     <h1>Period doubling and chaos</h1>
-    <p class="formula">x<sub>next</sub> = r · x · (1 − x)</p>
-    <p class="lede">Robert May's 1976 paper in Nature, “Simple mathematical models with very complicated dynamics”, followed this one population rule as a single number, r, is turned up. The population first settles, then alternates between two values, then four, then eight, and finally never repeats at all.</p>
-    <p class="lede">The diagram below is that whole story in one picture. Every horizontal position is a value of r. The dots above it are the values the population keeps visiting once it has settled down.</p>
+    <div class="intro">
+      <figure class="portrait">
+        <img src="img/robert-may.jpg" width="320" height="427" alt="Robert May speaking at a public lecture, in a light blue shirt">
+        <figcaption><b>Robert M. May</b> (1936–2020), theoretical ecologist, at a public lecture at Harvard in 2009.<span>Photo: <a href="https://commons.wikimedia.org/wiki/File:BobMayHarvard_(cropped2).jpg">NBeale</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons. Resized.</span></figcaption>
+      </figure>
+      <div class="intro-text">
+        <p class="lede">Robert May's 1976 paper in Nature, “Simple mathematical models with very complicated dynamics”, followed one simple population rule as a single number, r, is turned up. The population first settles, then alternates between two values, then four, then eight, and finally never repeats at all.</p>
+        <p class="formula">x<sub>next</sub> = r · x · (1 − x)</p>
+        <p class="lede">The diagram below is that whole story in one picture. Every horizontal position is a value of r. The dots above it are the values the population keeps visiting once it has settled down.</p>
+      </div>
+    </div>
   </header>
 
   <section class="sim" aria-label="Bifurcation diagram explorer">
@@ -175,18 +196,6 @@ td{color:var(--ink-2)}
         </tbody>
       </table>
     </div>
-  </section>
-
-  <section class="block">
-    <h2>What to try</h2>
-    <ol class="steps">
-      <li><span><b>Drag from 2.5 to 3.</b> There is one line, so the population settles on one value. The bottom curve flattens.</span></li>
-      <li><span><b>Cross 3.</b> The line forks in two and the bottom chart becomes a zigzag: a high generation, a low one. This is the first period doubling.</span></li>
-      <li><span><b>Continue to about 3.45, then 3.55.</b> Each branch forks again, giving 4 values and then 8. Notice that each fork arrives sooner than the last.</span></li>
-      <li><span>Press <b>Period-doubling cascade</b>. The forks crowd together like a countdown. Each stretch is about 4.669 times shorter than the one before. That ratio is the Feigenbaum constant, and it turns up in many unrelated systems. Infinitely many doublings fit before r ≈ 3.570.</span></li>
-      <li><span>Press <b>Full view</b> and look to the right of 3.57. The cloud is chaos: the population never repeats. It is not uniform, though. There are pale vertical gaps.</span></li>
-      <li><span>Press <b>Period-3 window</b>. Near 3.83 the chaos suddenly gives way to a clean cycle of 3 values. Each of the three branches then forks into 6, 12 and so on, replaying the whole diagram in miniature.</span></li>
-    </ol>
   </section>
 
   <p class="foot">Source: R. M. May, “Simple mathematical models with very complicated dynamics”, Nature 261, 459–467 (1976). The code in this repository was generated with Claude (Anthropic).</p>
