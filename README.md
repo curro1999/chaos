@@ -1,6 +1,6 @@
-# Chaos: interactive notes
+# PhD encounters
 
-Three small browser simulators for the ideas at the root of chaos theory.
+Interactive simulations of the equations and models I run into during my PhD, each with a short note on where it came from. The first three are about chaos and nonlinear dynamics.
 
 Live site: https://curro1999.github.io/chaos/
 
