@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monod Growth Model</title>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: one reading column. Context on top, the simulator in a single ruled panel, then the legend of values and the steps to try. */
+:root{
+  --bg:#f1f3f5; --panel:#fbfcfd; --ink:#16202a; --ink-2:#45525f; --ink-3:#64707d;
+  --rule:#d3d9df; --grid:#e4e8ec; --axis:#b9c2cb; --a:#1c5fc4; --b:#cf5417;
+  --font-display:Arial,Helvetica,sans-serif;
+  --font-body:Arial,Helvetica,sans-serif;
+  --font-mono:Arial,Helvetica,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+    --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+  --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;margin:0}
+.page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
+.top{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:700;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;max-width:66ch}
+.formula{font-family:var(--font-mono);font-size:clamp(15px,3.6vw,19px);line-height:1.7;color:var(--ink);max-width:none}
+.formula small{display:block;font-size:13px;color:var(--ink-3)}
+.lede{font-size:17px;color:var(--ink-2)}
+.block{display:flex;flex-direction:column;gap:18px}
+.sim{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.ctls{display:flex;flex-direction:column;gap:12px}
+.ctl{display:grid;grid-template-columns:180px minmax(0,1fr) 112px;grid-template-areas:"l s o";align-items:center;gap:12px}
+.ctl label{grid-area:l;font-size:14px;color:var(--ink-2)}
+.ctl input{grid-area:s;width:100%;margin:0;accent-color:var(--a)}
+.ctl output{grid-area:o;text-align:right;font-family:var(--font-mono);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--font-mono);font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--axis);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--grid)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.check input{accent-color:var(--b);width:16px;height:16px;margin:0}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.read{border-top:1px solid var(--rule);padding-top:10px;min-width:0}
+.read span{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.read strong{display:block;font-family:var(--font-display);font-weight:600;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2)}
+.key span{display:inline-flex;align-items:center}
+.sw{display:inline-block;width:22px;height:0;border-top:2px solid var(--a);margin-right:8px;vertical-align:middle;flex:none}
+.sw.b{border-top:2px dashed var(--b)}
+.sw.dot{width:9px;height:9px;border:0;border-radius:50%;background:var(--b)}
+.sw.sq{width:9px;height:9px;border:0;background:var(--a)}
+.cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);max-width:none}
+.fig{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plot{position:relative;width:100%}
+.plot canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{margin:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--rule)}
+.legend dt,.legend dd{margin:0;padding:12px 0;border-bottom:1px solid var(--rule)}
+.legend dt{font-family:var(--font-mono);font-size:13px;font-weight:500;padding-right:16px}
+.legend dd{color:var(--ink-2);font-size:15px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 16px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td:first-child{font-family:var(--font-mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+td{color:var(--ink-2)}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:32px minmax(0,1fr);max-width:70ch;color:var(--ink-2)}
+.steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
+.steps b,.legend b{font-weight:600;color:var(--ink)}
+.foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+.intro{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;align-items:start;margin-top:6px}
+.intro-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.portrait{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.portrait img{display:block;width:100%;height:auto;border-radius:4px;border:1px solid var(--rule)}
+.portrait figcaption{font-size:13px;line-height:1.45;color:var(--ink-2)}
+.portrait figcaption b{font-weight:700;color:var(--ink)}
+.portrait figcaption span{display:block;margin-top:4px;font-size:11px;color:var(--ink-3)}
+.portrait figcaption a{color:inherit}
+@media (max-width:720px){
+  .intro{grid-template-columns:150px minmax(0,1fr);gap:22px}
+}
+@media (max-width:480px){
+  .intro{display:block}
+  .intro::after{content:"";display:block;clear:both}
+  .portrait{float:left;width:118px;margin:5px 16px 8px 0}
+  .intro-text{display:block}
+  .intro-text > * + *{margin-top:14px}
+}
+@media (max-width:600px){
+  .sim{padding:16px}
+  .ctl{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l o" "s s";gap:4px 12px}
+  .legend{grid-template-columns:minmax(0,1fr)}
+  .legend dt{border-bottom:0;padding-bottom:0}
+  .legend dd{padding-top:4px}
+}
+.eyebrow a{color:inherit;text-decoration:none;border-bottom:1px solid var(--axis)}
+.eyebrow a:hover{color:var(--ink)}
+.notes{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.notes li{border-bottom:1px solid var(--rule)}
+.notes a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;align-items:baseline;padding:22px 0;color:inherit;text-decoration:none}
+.notes h2{grid-column:1}
+.notes .go{grid-column:2;font-family:var(--font-mono);font-size:13px;color:var(--a)}
+.notes .f,.notes p{grid-column:1 / -1}
+.notes .f{font-family:var(--font-mono);font-size:13px;color:var(--ink-3)}
+.notes p{color:var(--ink-2);font-size:15px}
+.notes a:hover h2{color:var(--a)}
+.notes a:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <p class="eyebrow"><a href="./">PhD encounters · interactive models</a></p>
+    <h1>The Monod equation</h1>
+    <div class="intro">
+      <figure class="portrait">
+        <img src="img/jacques-monod.jpg" width="320" height="427" alt="Black-and-white photo of Jacques Monod in a laboratory, in shirt and tie">
+        <figcaption><b>Jacques Monod</b> (1910–1976), biochemist, in 1971.<span>Photo: Farabola. Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Jacques_Monod_1971.jpg">Wikimedia Commons</a>.</span></figcaption>
+      </figure>
+      <div class="intro-text">
+        <p class="lede">Around 1940, in wartime Paris, Jacques Monod was growing bacteria in flasks and timing how fast they multiplied. He found that the growth rate depends on how much food is left, and that the dependence follows a simple curve: fast while the nutrient is plentiful, slowing down only when it is nearly gone. He summed it up in one equation:</p>
+        <p class="formula">μ = μ<sub>max</sub> · S / (K<sub>s</sub> + S)<small>μ is the growth rate, S is the concentration of the limiting nutrient</small></p>
+        <p class="lede">The same experiments led him to diauxie, the two-step growth of bacteria fed two sugars, and from there to the discovery of how genes are switched on and off, for which he shared the 1965 Nobel Prize. The equation is still the starting point for modelling a fermentation.</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="sim" aria-label="Monod growth simulator">
+    <div class="ctls">
+      <div class="ctl">
+        <label for="mu">Max growth rate μ<sub>max</sub></label>
+        <input type="range" id="mu" min="0.05" max="1.5" step="0.01" value="0.5">
+        <output id="mu-out" for="mu">0.50 per h</output>
+      </div>
+      <div class="ctl">
+        <label for="ks">Half-saturation K<sub>s</sub></label>
+        <input type="range" id="ks" min="0.01" max="5" step="0.01" value="0.5">
+        <output id="ks-out" for="ks">0.50 g/L</output>
+      </div>
+      <div class="ctl">
+        <label for="yy">Yield Y</label>
+        <input type="range" id="yy" min="0.05" max="1" step="0.01" value="0.5">
+        <output id="yy-out" for="yy">0.50 g/g</output>
+      </div>
+      <div class="ctl">
+        <label for="s0">Starting nutrient S₀</label>
+        <input type="range" id="s0" min="1" max="40" step="0.5" value="10">
+        <output id="s0-out" for="s0">10.0 g/L</output>
+      </div>
+      <div class="ctl">
+        <label for="x0">Starting biomass X₀</label>
+        <input type="range" id="x0" min="0.01" max="1" step="0.01" value="0.05">
+        <output id="x0-out" for="x0">0.05 g/L</output>
+      </div>
+    </div>
+    <div class="row">
+      <button type="button" id="reset">Reset</button>
+    </div>
+    <div class="reads">
+      <div class="read"><span>Final biomass</span><strong id="m-f">5.05 g/L</strong></div>
+      <div class="read"><span>Fastest doubling time</span><strong id="m-d">1.4 h</strong></div>
+      <div class="read"><span>Nutrient runs out after</span><strong id="m-t">9.6 h</strong></div>
+    </div>
+    <div class="key">
+      <span><i class="sw"></i>Biomass X</span>
+      <span><i class="sw b"></i>Nutrient S</span>
+    </div>
+    <div class="fig">
+      <p class="cap">Top chart, a batch culture over time. Vertical: concentration in g/L. Horizontal: time in hours.</p>
+      <div class="plot" style="height:290px">
+        <canvas id="ts" role="img" aria-label="Batch culture over time: biomass rises along an S-shaped curve while the nutrient falls to zero">Biomass and nutrient over time in a batch culture.</canvas>
+      </div>
+    </div>
+    <div class="fig">
+      <p class="cap">Bottom chart, the Monod curve. Vertical: growth rate μ per hour. Horizontal: nutrient S in g/L. The dot marks S = K<sub>s</sub>, where growth runs at half speed.</p>
+      <div class="plot" style="height:250px">
+        <canvas id="mc" role="img" aria-label="The Monod curve: growth rate rises steeply with nutrient concentration and levels off at the maximum rate">Growth rate against nutrient concentration.</canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What the values mean</h2>
+    <dl class="legend">
+      <dt>X · biomass</dt>
+      <dd>The amount of cells in the culture, in grams of dry weight per litre.</dd>
+      <dt>S · nutrient</dt>
+      <dd>The concentration of the one nutrient that limits growth, usually the sugar, in grams per litre.</dd>
+      <dt>μ · growth rate</dt>
+      <dd>How fast the biomass is growing at this moment, per hour. A value of 0.5 means the biomass is growing at 50% per hour at that instant.</dd>
+      <dt>μ<sub>max</sub> · maximum growth rate</dt>
+      <dd>The growth rate when the nutrient is unlimited. It belongs to the organism and the conditions: temperature, pH, medium.</dd>
+      <dt>K<sub>s</sub> · half-saturation</dt>
+      <dd>The nutrient concentration at which growth runs at half of μ<sub>max</sub>. A small K<sub>s</sub> means the cells keep growing at full speed until the nutrient is almost gone. Monod measured values of a few milligrams per litre, far smaller than this slider allows, which is why real cultures stop so abruptly.</dd>
+      <dt>Y · yield</dt>
+      <dd>Grams of biomass made per gram of nutrient consumed.</dd>
+      <dt>S₀ and X₀</dt>
+      <dd>The nutrient and the biomass at time zero, when the flask is inoculated.</dd>
+      <dt>Final biomass</dt>
+      <dd>What is left when the nutrient is gone: X₀ + Y · S₀.</dd>
+      <dt>Fastest doubling time</dt>
+      <dd>The time the culture needs to double while growing at μ<sub>max</sub>: 0.693 divided by μ<sub>max</sub>.</dd>
+      <dt>Nutrient runs out after</dt>
+      <dd>The time at which less than 1% of the starting nutrient remains.</dd>
+      <dt>Top chart</dt>
+      <dd>The two equations of a batch culture solved together: dX/dt = μ X and dS/dt = −μ X / Y. The biomass draws the familiar growth curve and the nutrient mirrors it.</dd>
+      <dt>Bottom chart</dt>
+      <dd>The equation itself. It has the same shape as the Michaelis–Menten curve for enzymes, though Monod arrived at it by fitting his growth measurements.</dd>
+    </dl>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Try this</th><th>What it shows</th></tr></thead>
+        <tbody>
+          <tr><td>Lower K<sub>s</sub> to 0.01</td><td>The growth curve stops with a sharp corner. The cells do not notice the shortage until the very end.</td></tr>
+          <tr><td>Raise K<sub>s</sub> to 5</td><td>Growth slows down long before the nutrient is gone and the curve bends gently.</td></tr>
+          <tr><td>Double S₀</td><td>The final biomass doubles, but the culture needs only about one more doubling time to get there.</td></tr>
+          <tr><td>Raise X₀</td><td>The whole curve shifts to the left. A bigger inoculum saves time and changes little else.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">Source: J. Monod, “The growth of bacterial cultures”, Annual Review of Microbiology 3, 371–394 (1949). Integrated here with a fourth-order Runge–Kutta method and a time step of 0.01 h. The code in this repository was generated with Claude (Anthropic).</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const MONO='12px Arial, Helvetica, sans-serif';
+function pal(){const s=getComputedStyle(document.documentElement),v=n=>s.getPropertyValue(n).trim();return {a:v('--a'),b:v('--b'),grid:v('--grid'),axis:v('--axis'),tick:v('--ink-3'),ink:v('--ink')};}
+function fit(c){const w=c.parentElement.clientWidth,h=c.parentElement.clientHeight,d=window.devicePixelRatio||1;c.width=Math.max(1,Math.round(w*d));c.height=Math.max(1,Math.round(h*d));const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);return {ctx,w,h,d};}
+function onChange(cb){let t;const run=()=>{clearTimeout(t);t=setTimeout(cb,80);};window.addEventListener('resize',run);matchMedia('(prefers-color-scheme: dark)').addEventListener('change',run);new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run);}
+function path(c,pts,from,X,Y,col,dash,wd){c.beginPath();c.setLineDash(dash);c.strokeStyle=col;c.lineWidth=wd;c.lineJoin='round';c.lineCap='round';for(let i=from;i<pts.length;i++){const x=X(pts[i],i),y=Y(pts[i],i);if(i>from)c.lineTo(x,y);else c.moveTo(x,y);}c.stroke();c.setLineDash([]);}
+function disc(c,x,y,r,col){c.beginPath();c.fillStyle=col;c.arc(x,y,r,0,Math.PI*2);c.fill();}
+(function(){
+const dt=0.01,NMAX=20000,L=44,R=14,TP=12,B=42;
+const E={mu:$('mu'),ks:$('ks'),yy:$('yy'),s0:$('s0'),x0:$('x0')};
+const DEF={mu:0.5,ks:0.5,yy:0.5,s0:10,x0:0.05};
+const ts=$('ts'),mc=$('mc');
+let g1=fit(ts),g2=fit(mc),P=pal();
+function scale(m){const raw=Math.max(m,1e-9)/4,p=Math.pow(10,Math.floor(Math.log10(raw))),n=raw/p,s=(n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p;return {max:Math.ceil(m/s-1e-9)*s,step:s};}
+function fmt(v,s){const d=Number.isInteger(s)?0:Number.isInteger(+(s*10).toFixed(6))?1:2;return v.toFixed(d);}
+function sim(mu,ks,yy,s0,x0,tEnd){
+  const f=(X,S)=>{const s=Math.max(S,0),m=mu*s/(ks+s);return [m*X,-m*X/yy];};
+  let X=x0,S=s0,tEx=null;const xs=[X],ss=[S];
+  for(let i=1;i<=NMAX;i++){
+    const k1=f(X,S),k2=f(X+k1[0]*dt/2,S+k1[1]*dt/2),k3=f(X+k2[0]*dt/2,S+k2[1]*dt/2),k4=f(X+k3[0]*dt,S+k3[1]*dt);
+    X+=dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]);S=Math.max(0,S+dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]));
+    xs.push(X);ss.push(S);
+    if(tEx===null&&S<=0.01*s0)tEx=i*dt;
+    if(tEnd?i*dt>=tEnd:(tEx!==null&&i*dt>=Math.max(tEx*1.3,tEx+1)))break;
+  }
+  return {xs:xs,ss:ss,tEx:tEx,T:(xs.length-1)*dt};
+}
+function axes(c,w,h,sx,sy,xl){
+  const pw=w-L-R,ph=h-TP-B;
+  c.clearRect(0,0,w,h);c.font=MONO;c.lineWidth=1;
+  c.textAlign='right';c.textBaseline='middle';
+  for(let v=0;v<=sy.max+1e-9;v+=sy.step){const y=TP+(1-v/sy.max)*ph;c.strokeStyle=v<1e-9?P.axis:P.grid;c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.fillStyle=P.tick;c.fillText(fmt(v,sy.step),L-8,y);}
+  c.textAlign='center';c.textBaseline='top';c.fillStyle=P.tick;
+  for(let v=0;v<=sx.max+1e-9;v+=sx.step)c.fillText(fmt(v,sx.step),L+v/sx.max*pw,TP+ph+8);
+  c.fillText(xl,L+pw/2,TP+ph+25);
+  return [pw,ph];
+}
+function draw(){
+  const mu=+E.mu.value,ks=+E.ks.value,yy=+E.yy.value,s0=+E.s0.value,x0=+E.x0.value;
+  $('mu-out').textContent=mu.toFixed(2)+' per h';$('ks-out').textContent=ks.toFixed(2)+' g/L';$('yy-out').textContent=yy.toFixed(2)+' g/g';$('s0-out').textContent=s0.toFixed(1)+' g/L';$('x0-out').textContent=x0.toFixed(2)+' g/L';
+  let r=sim(mu,ks,yy,s0,x0);
+  $('m-f').textContent=(x0+yy*s0).toFixed(2)+' g/L';
+  $('m-d').textContent=(Math.LN2/mu).toFixed(1)+' h';
+  $('m-t').textContent=r.tEx===null?'More than 200 h':r.tEx.toFixed(1)+' h';
+  const sx=scale(r.T),sy=scale(Math.max(s0,x0+yy*s0));
+  r=sim(mu,ks,yy,s0,x0,sx.max);
+  let c=g1.ctx,pp=axes(c,g1.w,g1.h,sx,sy,'time (h)'),pw=pp[0],ph=pp[1];
+  const tx=(v,i)=>L+(i*dt)/sx.max*pw,ty=v=>TP+(1-v/sy.max)*ph;
+  path(c,r.ss,0,tx,ty,P.b,[6,4],2);
+  path(c,r.xs,0,tx,ty,P.a,[],2);
+  const qx=scale(s0),qy=scale(mu*1.04);
+  c=g2.ctx;pp=axes(c,g2.w,g2.h,qx,qy,'nutrient S (g/L)');pw=pp[0];ph=pp[1];
+  const X=v=>L+v/qx.max*pw,Y=v=>TP+(1-v/qy.max)*ph;
+  c.strokeStyle=P.tick;c.setLineDash([2,4]);c.beginPath();c.moveTo(L,Y(mu));c.lineTo(L+pw,Y(mu));c.stroke();
+  if(ks<=qx.max){c.beginPath();c.moveTo(X(ks),Y(0));c.lineTo(X(ks),Y(mu/2));c.lineTo(L,Y(mu/2));c.stroke();}
+  c.setLineDash([]);
+  c.font=MONO;c.fillStyle=P.tick;c.textAlign='right';c.textBaseline='bottom';c.fillText('μmax',L+pw-4,Y(mu)-4);
+  const pts=[];for(let i=0;i<=300;i++)pts.push(qx.max*i/300);
+  path(c,pts,0,v=>X(v),v=>Y(mu*v/(ks+v)),P.a,[],2);
+  if(ks<=qx.max){disc(c,X(ks),Y(mu/2),5,P.b);c.fillStyle=P.tick;c.textAlign='left';c.textBaseline='top';c.fillText('S = Ks',X(ks)+9,Y(mu/2)+5);}
+}
+Object.keys(E).forEach(k=>E[k].addEventListener('input',draw));
+$('reset').addEventListener('click',()=>{Object.keys(E).forEach(k=>{E[k].value=DEF[k];});draw();});
+onChange(()=>{g1=fit(ts);g2=fit(mc);P=pal();draw();});
+draw();
+})();
+</script>
+</body>
+</html>
