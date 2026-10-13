@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Mandelbrot Set</title>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: one reading column. Context on top, the simulator in a single ruled panel, then the legend of values and the steps to try. */
+:root{
+  --bg:#f1f3f5; --panel:#fbfcfd; --ink:#16202a; --ink-2:#45525f; --ink-3:#64707d;
+  --rule:#d3d9df; --grid:#e4e8ec; --axis:#b9c2cb; --a:#1c5fc4; --b:#cf5417;
+  --font-display:Arial,Helvetica,sans-serif;
+  --font-body:Arial,Helvetica,sans-serif;
+  --font-mono:Arial,Helvetica,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+    --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+  --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;margin:0}
+.page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
+.top{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:700;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;max-width:66ch}
+.formula{font-family:var(--font-mono);font-size:clamp(15px,3.6vw,19px);line-height:1.7;color:var(--ink);max-width:none}
+.formula small{display:block;font-size:13px;color:var(--ink-3)}
+.lede{font-size:17px;color:var(--ink-2)}
+.block{display:flex;flex-direction:column;gap:18px}
+.sim{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.ctls{display:flex;flex-direction:column;gap:12px}
+.ctl{display:grid;grid-template-columns:180px minmax(0,1fr) 112px;grid-template-areas:"l s o";align-items:center;gap:12px}
+.ctl label{grid-area:l;font-size:14px;color:var(--ink-2)}
+.ctl input{grid-area:s;width:100%;margin:0;accent-color:var(--a)}
+.ctl output{grid-area:o;text-align:right;font-family:var(--font-mono);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--font-mono);font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--axis);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--grid)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.check input{accent-color:var(--b);width:16px;height:16px;margin:0}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.read{border-top:1px solid var(--rule);padding-top:10px;min-width:0}
+.read span{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.read strong{display:block;font-family:var(--font-display);font-weight:600;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2)}
+.key span{display:inline-flex;align-items:center}
+.sw{display:inline-block;width:22px;height:0;border-top:2px solid var(--a);margin-right:8px;vertical-align:middle;flex:none}
+.sw.b{border-top:2px dashed var(--b)}
+.sw.dot{width:9px;height:9px;border:0;border-radius:50%;background:var(--b)}
+.sw.sq{width:9px;height:9px;border:0;background:var(--a)}
+.cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);max-width:none}
+.fig{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plot{position:relative;width:100%}
+.plot canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{margin:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--rule)}
+.legend dt,.legend dd{margin:0;padding:12px 0;border-bottom:1px solid var(--rule)}
+.legend dt{font-family:var(--font-mono);font-size:13px;font-weight:500;padding-right:16px}
+.legend dd{color:var(--ink-2);font-size:15px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 16px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td:first-child{font-family:var(--font-mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+td{color:var(--ink-2)}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:32px minmax(0,1fr);max-width:70ch;color:var(--ink-2)}
+.steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
+.steps b,.legend b{font-weight:600;color:var(--ink)}
+.foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+.intro{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;align-items:start;margin-top:6px}
+.intro-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.portrait{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.portrait img{display:block;width:100%;height:auto;border-radius:4px;border:1px solid var(--rule)}
+.portrait figcaption{font-size:13px;line-height:1.45;color:var(--ink-2)}
+.portrait figcaption b{font-weight:700;color:var(--ink)}
+.portrait figcaption span{display:block;margin-top:4px;font-size:11px;color:var(--ink-3)}
+.portrait figcaption a{color:inherit}
+@media (max-width:720px){
+  .intro{grid-template-columns:150px minmax(0,1fr);gap:22px}
+}
+@media (max-width:480px){
+  .intro{display:block}
+  .intro::after{content:"";display:block;clear:both}
+  .portrait{float:left;width:118px;margin:5px 16px 8px 0}
+  .intro-text{display:block}
+  .intro-text > * + *{margin-top:14px}
+}
+@media (max-width:600px){
+  .sim{padding:16px}
+  .ctl{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l o" "s s";gap:4px 12px}
+  .legend{grid-template-columns:minmax(0,1fr)}
+  .legend dt{border-bottom:0;padding-bottom:0}
+  .legend dd{padding-top:4px}
+}
+.eyebrow a{color:inherit;text-decoration:none;border-bottom:1px solid var(--axis)}
+.eyebrow a:hover{color:var(--ink)}
+.notes{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.notes li{border-bottom:1px solid var(--rule)}
+.notes a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;align-items:baseline;padding:22px 0;color:inherit;text-decoration:none}
+.notes h2{grid-column:1}
+.notes .go{grid-column:2;font-family:var(--font-mono);font-size:13px;color:var(--a)}
+.notes .f,.notes p{grid-column:1 / -1}
+.notes .f{font-family:var(--font-mono);font-size:13px;color:var(--ink-3)}
+.notes p{color:var(--ink-2);font-size:15px}
+.notes a:hover h2{color:var(--a)}
+.notes a:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.lede a,.legend a{color:var(--a)}
+.sw.in{width:9px;height:9px;border:0;background:var(--ink)}
+.sw.ring{width:11px;height:11px;border:2px solid var(--b);border-radius:50%;background:transparent}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <p class="eyebrow"><a href="./">PhD encounters · interactive models</a></p>
+    <h1>The Mandelbrot set</h1>
+    <div class="intro">
+      <figure class="portrait">
+        <img src="img/benoit-mandelbrot.jpg" width="280" height="280" alt="Black-and-white photo of Benoit Mandelbrot in glasses, jacket and tie">
+        <figcaption><b>Benoit Mandelbrot</b> (1924–2010), mathematician, in 2007.<span>Photo: <a href="https://commons.wikimedia.org/wiki/File:Benoit_Mandelbrot_mg_1804-d.jpg">Rama</a>, <a href="https://creativecommons.org/licenses/by-sa/2.0/fr/deed.en">CC BY-SA 2.0 FR</a>, via Wikimedia Commons. Cropped and converted to black and white.</span></figcaption>
+      </figure>
+      <div class="intro-text">
+        <p class="lede">On 1 March 1980, at IBM's research centre north of New York, Benoit Mandelbrot got a computer to answer a simple question about a simple rule. Start at zero, square the number, add a constant c, and repeat. For which values of c does the result stay small forever, and for which does it run off to infinity? The constant is a complex number, a point on a plane, so the answer is a picture.</p>
+        <p class="formula">z<sub>next</sub> = z² + c<small>z starts at 0, and c is a point on the plane</small></p>
+        <p class="lede">The picture was a heart with a disc attached, surrounded by smaller copies of itself, with more detail at every magnification. Pierre Fatou and Gaston Julia had studied these iterations in the 1910s without being able to see them, and Robert Brooks and Peter Matelski had printed a rough version in 1978. The rule is <a href="logistic-map-explorer.html">Robert May's logistic map</a> in another form, taken from ordinary numbers to complex ones. Along the horizontal axis of the picture lies the whole <a href="bifurcation-diagram-explorer.html">period-doubling story</a>.</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="sim" aria-label="Mandelbrot set explorer">
+    <div class="row">
+      <button type="button" data-p="all" aria-pressed="true">Whole set</button>
+      <button type="button" data-p="dbl" aria-pressed="false">Period doubling</button>
+      <button type="button" data-p="p3" aria-pressed="false">Period-3 copy</button>
+      <button type="button" data-p="sea" aria-pressed="false">Seahorse valley</button>
+    </div>
+    <div class="row">
+      <button type="button" id="zin">Zoom in on the chosen point</button>
+      <button type="button" id="zout">Zoom out</button>
+    </div>
+    <div class="reads">
+      <div class="read"><span>Chosen point c</span><strong id="m-c">−1.000 + 0.000i</strong></div>
+      <div class="read"><span>What z does</span><strong id="m-f">Cycle of 2 values</strong></div>
+      <div class="read"><span>Same point in May's map</span><strong id="m-r">r = 3.2361</strong></div>
+      <div class="read"><span>Magnification</span><strong id="m-z">×1</strong></div>
+    </div>
+    <div class="key">
+      <span><i class="sw in"></i>Inside the set: z stays small forever</span>
+      <span><i class="sw sq"></i>Outside: the deeper the blue, the longer z took to escape</span>
+      <span><i class="sw ring"></i>The point c you chose</span>
+    </div>
+    <div class="fig">
+      <p class="cap">The plane of c. Horizontal: real part. Vertical: imaginary part. Click or tap anywhere to choose a point. A click close to the horizontal axis lands exactly on it.</p>
+      <div class="plot" style="height:clamp(290px,62vw,450px)">
+        <canvas id="set" role="img" aria-label="The Mandelbrot set: a heart-shaped region with a disc attached on its left and a thin needle extending further left, surrounded by smaller buds" style="cursor:crosshair">The Mandelbrot set in the complex plane.</canvas>
+      </div>
+    </div>
+    <div class="fig">
+      <p class="cap">The first 60 steps for the chosen c. Vertical: the size of z, its distance from zero. Once it passes 2 it never comes back.</p>
+      <div class="plot" style="height:190px">
+        <canvas id="orb" role="img" aria-label="The size of z over the first 60 steps of the rule for the chosen value of c">Size of z over 60 steps.</canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What the values mean</h2>
+    <dl class="legend">
+      <dt>c · the constant</dt>
+      <dd>The number added at every step. It is complex: a real part, read on the horizontal axis, and an imaginary part, read on the vertical axis. Every point of the picture is one value of c.</dd>
+      <dt>z · the running value</dt>
+      <dd>The number that is squared again and again. It always starts at 0 and it is also complex. Squaring a complex number squares its distance from zero and doubles its angle.</dd>
+      <dt><i class="sw in"></i>The set</dt>
+      <dd>All the values of c for which z stays small forever. Mandelbrot at first thought the small islands were separate. Adrien Douady and John Hubbard, who named the set after him, proved that it is all one piece, joined by threads too thin to show.</dd>
+      <dt><i class="sw sq"></i>Outside the set</dt>
+      <dd>Values of c for which z runs off to infinity. The shade shows how many steps that took. The darkest blue hugs the boundary, where z hesitates longest.</dd>
+      <dt><i class="sw ring"></i>Chosen point</dt>
+      <dd>The value of c that the readouts and the bottom chart describe.</dd>
+      <dt>What z does</dt>
+      <dd>Whether z settles on one value, repeats in a cycle, stays small without ever repeating, or escapes, checked over tens of thousands of steps. Each bud of the set has its own cycle length.</dd>
+      <dt>Same point in May's map</dt>
+      <dd>On the horizontal axis the rule is the logistic map in disguise, with c = r · (2 − r) / 4. The readout gives the r that matches your c.</dd>
+      <dt>Magnification</dt>
+      <dd>How much the view is enlarged compared with the whole set. More steps are computed as you zoom, and the picture stays as intricate as before.</dd>
+      <dt>Bottom chart</dt>
+      <dd>The distance of z from zero at each step. The dashed line at 2 is the point of no return.</dd>
+    </dl>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>c on the axis</th><th>May's r</th><th>What sits there</th></tr></thead>
+        <tbody>
+          <tr><td>0.25</td><td>1</td><td>The notch of the heart. Inside the heart z settles on one value.</td></tr>
+          <tr><td>−0.75</td><td>3</td><td>The heart meets the disc. First period doubling: one value becomes two.</td></tr>
+          <tr><td>−1.25</td><td>3.449</td><td>The disc meets a smaller one. Two values become four.</td></tr>
+          <tr><td>−1.401</td><td>3.570</td><td>The discs have shrunk to nothing and the needle begins. Chaos.</td></tr>
+          <tr><td>−1.75</td><td>3.828</td><td>A small copy of the whole set sits on the needle. This is the period-3 window.</td></tr>
+          <tr><td>−2</td><td>4</td><td>The tip of the needle, and the end of the logistic map.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">Source: B. B. Mandelbrot, “Fractal aspects of the iteration of z → λz(1 − z) for complex λ and z”, Annals of the New York Academy of Sciences 357, 249–259 (1980). The picture is computed in your browser, with more steps per point as you zoom in. The code in this repository was generated with Claude (Anthropic).</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const MONO='12px Arial, Helvetica, sans-serif';
+function pal(){const s=getComputedStyle(document.documentElement),v=n=>s.getPropertyValue(n).trim();return {a:v('--a'),b:v('--b'),grid:v('--grid'),axis:v('--axis'),tick:v('--ink-3'),ink:v('--ink')};}
+function fit(c){const w=c.parentElement.clientWidth,h=c.parentElement.clientHeight,d=window.devicePixelRatio||1;c.width=Math.max(1,Math.round(w*d));c.height=Math.max(1,Math.round(h*d));const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);return {ctx,w,h,d};}
+function onChange(cb){let t;const run=()=>{clearTimeout(t);t=setTimeout(cb,80);};window.addEventListener('resize',run);matchMedia('(prefers-color-scheme: dark)').addEventListener('change',run);new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run);}
+function path(c,pts,from,X,Y,col,dash,wd){c.beginPath();c.setLineDash(dash);c.strokeStyle=col;c.lineWidth=wd;c.lineJoin='round';c.lineCap='round';for(let i=from;i<pts.length;i++){const x=X(pts[i],i),y=Y(pts[i],i);if(i>from)c.lineTo(x,y);else c.moveTo(x,y);}c.stroke();c.setLineDash([]);}
+function disc(c,x,y,r,col){c.beginPath();c.fillStyle=col;c.arc(x,y,r,0,Math.PI*2);c.fill();}
+(function(){
+const R=14,TP=12,B=42;
+const PRE={
+  all:{cx:-0.7,cy:0,w:2.9,h:2.5,c:[-1,0]},
+  dbl:{cx:-1.09,cy:0,w:0.78,h:0.56,c:[-1.31,0]},
+  p3:{cx:-1.7585,cy:0,w:0.075,h:0.05,c:[-1.7549,0]},
+  sea:{cx:-0.7453,cy:0.1127,w:0.012,h:0.008,c:[-0.7453,0.1127]}
+};
+const cv=$('set'),orb=$('orb');
+let g1=fit(cv),g2=fit(orb),P=pal(),L=44,pw=1,ph=1,off=null,job=0,cur='all',W0=1;
+let V={cx:-0.7,cy:0,w:3},C=[-1,0],xt=[],yt=[];
+const MIN='−';
+function hex(s){const m=/^#?([0-9a-f]{6})$/i.exec(s);if(!m)return [128,128,128];const n=parseInt(m[1],16);return [n>>16&255,n>>8&255,n&255];}
+function nice(x){const p=Math.pow(10,Math.floor(Math.log10(x))),m=x/p;return (m<=1?1:m<=2?2:m<=5?5:10)*p;}
+function ticks(lo,hi,n){
+  const st=nice((hi-lo)/n),d=Math.max(0,-Math.floor(Math.log10(st)+1e-9)),out=[];
+  for(let k=Math.ceil(lo/st-1e-9);k*st<=hi+st*1e-9;k++){const v=k*st;out.push([v,(Math.abs(v)<st/1e6?0:v).toFixed(d).replace('-',MIN)]);}
+  return out;
+}
+function hgt(){return V.w*ph/pw;}
+function layout(){
+  const c=g1.ctx;c.font=MONO;L=44;
+  for(let pass=0;pass<2;pass++){
+    pw=Math.max(40,g1.w-L-R);ph=Math.max(40,g1.h-TP-B);
+    const hh=hgt();
+    yt=ticks(V.cy-hh/2,V.cy+hh/2,Math.max(2,Math.floor(ph/70)));
+    L=Math.max(44,Math.ceil(Math.max.apply(null,yt.map(t=>c.measureText(t[1]).width)))+14);
+  }
+  pw=Math.max(40,g1.w-L-R);
+  xt=ticks(V.cx-V.w/2,V.cx+V.w/2,Math.max(2,Math.floor(pw/(V.w<0.05?130:95))));
+}
+function boxW(p){return Math.max(p.w,p.h*pw/ph);}
+function preset(k){
+  const p=PRE[k];cur=k;L=44;pw=Math.max(40,g1.w-L-R);ph=Math.max(40,g1.h-TP-B);
+  W0=boxW(PRE.all);V={cx:p.cx,cy:p.cy,w:boxW(p)};C=p.c.slice();
+  press();layout();render();readout();
+}
+function press(){document.querySelectorAll('button[data-p]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===cur?'true':'false'));}
+function iter(cr,ci,N){
+  const q=(cr-0.25)*(cr-0.25)+ci*ci;
+  if(q*(q+(cr-0.25))<=0.25*ci*ci||(cr+1)*(cr+1)+ci*ci<=0.0625)return -1;
+  let zr=0,zi=0,zr2=0,zi2=0,n=0;
+  while(n<N&&zr2+zi2<=256){zi=2*zr*zi+ci;zr=zr2-zi2+cr;zr2=zr*zr;zi2=zi*zi;n++;}
+  if(zr2+zi2<=256)return -1;
+  return n+1-Math.log2(0.5*Math.log(zr2+zi2));
+}
+function render(){
+  const tok=++job,d=Math.min(g1.d,2),W=Math.max(2,Math.round(pw*d)),H=Math.max(2,Math.round(ph*d));
+  const cvs=document.createElement('canvas');cvs.width=W;cvs.height=H;
+  const o=cvs.getContext('2d'),img=o.createImageData(W,H),data=img.data;
+  const sc=V.w/W,x0=V.cx-V.w/2,y0=V.cy+sc*H/2;
+  const N=Math.min(3000,Math.round(160+120*Math.log2(Math.max(1,W0/V.w))));
+  const bg=hex(getComputedStyle(document.documentElement).getPropertyValue('--panel').trim()),fa=hex(P.a),fi=hex(P.ink);
+  // a coarse first pass gives the spread of escape times in this view, so the shading uses its full range at any zoom
+  const smp=[];
+  for(let y=3;y<H;y+=7)for(let x=3;x<W;x+=7){const v=iter(x0+(x+0.5)*sc,y0-(y+0.5)*sc,N);if(v>=0)smp.push(v);}
+  smp.sort((a,b)=>a-b);
+  const rank=v=>{let lo=0,hi=smp.length;while(lo<hi){const m=(lo+hi)>>1;if(smp[m]<v)lo=m+1;else hi=m;}return smp.length?lo/smp.length:0;};
+  off=cvs;let row=0;
+  function chunk(){
+    if(tok!==job)return;
+    const t0=performance.now();
+    while(row<H&&performance.now()-t0<16){
+      const ci=y0-(row+0.5)*sc;let k=row*W*4;
+      for(let x=0;x<W;x++){
+        const v=iter(x0+(x+0.5)*sc,ci,N);
+        if(v<0){data[k]=fi[0];data[k+1]=fi[1];data[k+2]=fi[2];}
+        else{const t=Math.pow(rank(v),2.4);data[k]=bg[0]+(fa[0]-bg[0])*t;data[k+1]=bg[1]+(fa[1]-bg[1])*t;data[k+2]=bg[2]+(fa[2]-bg[2])*t;}
+        data[k+3]=255;k+=4;
+      }
+      row++;
+    }
+    o.putImageData(img,0,0);draw();
+    if(row<H)requestAnimationFrame(chunk);else cv.dataset.ready=String(tok);
+  }
+  chunk();
+}
+function draw(){
+  const c=g1.ctx,w=g1.w,h=g1.h,hh=hgt();
+  c.clearRect(0,0,w,h);
+  if(off)c.drawImage(off,L,TP,pw,ph);
+  c.lineWidth=1;c.strokeStyle=P.axis;c.strokeRect(L+0.5,TP+0.5,pw-1,ph-1);
+  c.font=MONO;c.fillStyle=P.tick;
+  const X=v=>L+(v-(V.cx-V.w/2))/V.w*pw,Y=v=>TP+((V.cy+hh/2)-v)/hh*ph;
+  c.textAlign='right';c.textBaseline='middle';
+  yt.forEach(t=>{const y=Y(t[0]);c.beginPath();c.moveTo(L-4,y);c.lineTo(L,y);c.stroke();c.fillText(t[1],L-8,y);});
+  c.textAlign='center';c.textBaseline='top';
+  xt.forEach(t=>{const x=X(t[0]);c.beginPath();c.moveTo(x,TP+ph);c.lineTo(x,TP+ph+4);c.stroke();c.fillText(t[1],x,TP+ph+8);});
+  c.fillText('real part of c',L+pw/2,TP+ph+25);
+  const mx=X(C[0]),my=Y(C[1]);
+  if(mx>=L&&mx<=L+pw&&my>=TP&&my<=TP+ph){
+    c.beginPath();c.arc(mx,my,7,0,Math.PI*2);c.lineWidth=5;c.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--panel').trim();c.stroke();
+    c.lineWidth=2.5;c.strokeStyle=P.b;c.stroke();
+  }
+}
+function fate(cr,ci){
+  let zr=0,zi=0;const m=[0];
+  for(let n=1;n<=60000;n++){
+    const t=zr*zr-zi*zi+cr;zi=2*zr*zi+ci;zr=t;
+    if(n<=60)m.push(Math.hypot(zr,zi));
+    if(zr*zr+zi*zi>4)return {esc:n,m:m};
+  }
+  const ar=zr,ai=zi;
+  for(let p=1;p<=1024;p++){
+    const t=zr*zr-zi*zi+cr;zi=2*zr*zi+ci;zr=t;
+    if(Math.abs(zr-ar)+Math.abs(zi-ai)<1e-7)return {per:p,m:m};
+  }
+  return {per:0,m:m};
+}
+function num(v,d){return Math.abs(v).toFixed(d);}
+function readout(){
+  const d=Math.min(14,Math.max(3,Math.ceil(-Math.log10(V.w))+3)),f=fate(C[0],C[1]);
+  $('m-c').textContent=(C[0]<0?MIN:'')+num(C[0],d)+(C[1]<0?' '+MIN+' ':' + ')+num(C[1],d)+'i';
+  $('m-f').textContent=f.esc?'Escapes after '+f.esc+(f.esc===1?' step':' steps'):f.per===1?'Settles on one value':f.per>1?'Cycle of '+f.per+' values':'Stays small, never repeats';
+  $('m-r').textContent=C[1]!==0?'Only on the horizontal axis':C[0]<=0.25?'r = '+(1+Math.sqrt(1-4*C[0])).toFixed(4):'None to the right of 0.25';
+  $('m-z').textContent='×'+Math.round(W0/V.w).toLocaleString('en-US');
+  const c=g2.ctx,w=g2.w,h=g2.h,l=44,qw=w-l-R,qh=h-TP-B,YM=3;
+  c.clearRect(0,0,w,h);c.font=MONO;c.lineWidth=1;
+  const X=i=>l+i/60*qw,Y=v=>TP+(1-v/YM)*qh;
+  c.textAlign='right';c.textBaseline='middle';
+  for(let v=0;v<=YM;v++){c.strokeStyle=v===0?P.axis:P.grid;c.beginPath();c.moveTo(l,Y(v));c.lineTo(l+qw,Y(v));c.stroke();c.fillStyle=P.tick;c.fillText(String(v),l-8,Y(v));}
+  c.textAlign='center';c.textBaseline='top';c.fillStyle=P.tick;
+  for(let v=0;v<=60;v+=10)c.fillText(String(v),X(v),TP+qh+8);
+  c.fillText('step',l+qw/2,TP+qh+25);
+  c.strokeStyle=P.tick;c.setLineDash([6,4]);c.beginPath();c.moveTo(l,Y(2));c.lineTo(l+qw,Y(2));c.stroke();c.setLineDash([]);
+  c.textAlign='right';c.textBaseline='bottom';c.fillText('escape line',l+qw-4,Y(2)-4);
+  c.save();c.beginPath();c.rect(l-4,TP-4,qw+8,qh+8);c.clip();
+  path(c,f.m,0,(v,i)=>X(i),v=>Y(Math.min(v,YM+1)),P.b,[],1.5);
+  f.m.forEach((v,i)=>{if(v<=YM)disc(c,X(i),Y(v),2.2,P.b);});
+  c.restore();
+}
+function zoom(k){
+  if(k<1){V.cx=C[0];V.cy=C[1];}
+  V.w=Math.max(1e-11,V.w*k);cur=null;
+  if(V.w>=W0*0.999){preset0();return;}
+  press();layout();render();readout();
+}
+function preset0(){const keep=C.slice();preset('all');C=keep;draw();readout();}
+cv.addEventListener('click',e=>{
+  const b=cv.getBoundingClientRect(),x=e.clientX-b.left,y=e.clientY-b.top,hh=hgt();
+  if(x<L||x>L+pw||y<TP||y>TP+ph)return;
+  const re=V.cx-V.w/2+(x-L)/pw*V.w;let im=V.cy+hh/2-(y-TP)/ph*hh;
+  if(Math.abs(im)<=4*hh/ph)im=0;
+  C=[re,im];draw();readout();
+});
+document.querySelectorAll('button[data-p]').forEach(b=>b.addEventListener('click',()=>preset(b.dataset.p)));
+$('zin').addEventListener('click',()=>zoom(0.25));
+$('zout').addEventListener('click',()=>zoom(4));
+onChange(()=>{
+  g1=fit(cv);g2=fit(orb);P=pal();
+  if(cur){const keep=C.slice();preset(cur);C=keep;draw();readout();}
+  else{L=44;pw=Math.max(40,g1.w-L-R);ph=Math.max(40,g1.h-TP-B);W0=boxW(PRE.all);layout();render();readout();}
+});
+preset('all');
+})();
+</script>
+</body>
+</html>

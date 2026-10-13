@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The pH Scale</title>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: one reading column. Context on top, the simulator in a single ruled panel, then the legend of values and the steps to try. */
+:root{
+  --bg:#f1f3f5; --panel:#fbfcfd; --ink:#16202a; --ink-2:#45525f; --ink-3:#64707d;
+  --rule:#d3d9df; --grid:#e4e8ec; --axis:#b9c2cb; --a:#1c5fc4; --b:#cf5417;
+  --font-display:Arial,Helvetica,sans-serif;
+  --font-body:Arial,Helvetica,sans-serif;
+  --font-mono:Arial,Helvetica,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+    --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+  --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;margin:0}
+.page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
+.top{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:700;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;max-width:66ch}
+.formula{font-family:var(--font-mono);font-size:clamp(15px,3.6vw,19px);line-height:1.7;color:var(--ink);max-width:none}
+.formula small{display:block;font-size:13px;color:var(--ink-3)}
+.lede{font-size:17px;color:var(--ink-2)}
+.block{display:flex;flex-direction:column;gap:18px}
+.sim{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.ctls{display:flex;flex-direction:column;gap:12px}
+.ctl{display:grid;grid-template-columns:180px minmax(0,1fr) 112px;grid-template-areas:"l s o";align-items:center;gap:12px}
+.ctl label{grid-area:l;font-size:14px;color:var(--ink-2)}
+.ctl input{grid-area:s;width:100%;margin:0;accent-color:var(--a)}
+.ctl output{grid-area:o;text-align:right;font-family:var(--font-mono);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:var(--font-mono);font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--axis);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--grid)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.check input{accent-color:var(--b);width:16px;height:16px;margin:0}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.read{border-top:1px solid var(--rule);padding-top:10px;min-width:0}
+.read span{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.read strong{display:block;font-family:var(--font-display);font-weight:600;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2)}
+.key span{display:inline-flex;align-items:center}
+.sw{display:inline-block;width:22px;height:0;border-top:2px solid var(--a);margin-right:8px;vertical-align:middle;flex:none}
+.sw.b{border-top:2px dashed var(--b)}
+.sw.dot{width:9px;height:9px;border:0;border-radius:50%;background:var(--b)}
+.sw.sq{width:9px;height:9px;border:0;background:var(--a)}
+.cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);max-width:none}
+.fig{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plot{position:relative;width:100%}
+.plot canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{margin:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--rule)}
+.legend dt,.legend dd{margin:0;padding:12px 0;border-bottom:1px solid var(--rule)}
+.legend dt{font-family:var(--font-mono);font-size:13px;font-weight:500;padding-right:16px}
+.legend dd{color:var(--ink-2);font-size:15px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 16px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td:first-child{font-family:var(--font-mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+td{color:var(--ink-2)}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:32px minmax(0,1fr);max-width:70ch;color:var(--ink-2)}
+.steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
+.steps b,.legend b{font-weight:600;color:var(--ink)}
+.foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+.intro{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;align-items:start;margin-top:6px}
+.intro-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.portrait{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.portrait img{display:block;width:100%;height:auto;border-radius:4px;border:1px solid var(--rule)}
+.portrait figcaption{font-size:13px;line-height:1.45;color:var(--ink-2)}
+.portrait figcaption b{font-weight:700;color:var(--ink)}
+.portrait figcaption span{display:block;margin-top:4px;font-size:11px;color:var(--ink-3)}
+.portrait figcaption a{color:inherit}
+@media (max-width:720px){
+  .intro{grid-template-columns:150px minmax(0,1fr);gap:22px}
+}
+@media (max-width:480px){
+  .intro{display:block}
+  .intro::after{content:"";display:block;clear:both}
+  .portrait{float:left;width:118px;margin:5px 16px 8px 0}
+  .intro-text{display:block}
+  .intro-text > * + *{margin-top:14px}
+}
+@media (max-width:600px){
+  .sim{padding:16px}
+  .ctl{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l o" "s s";gap:4px 12px}
+  .legend{grid-template-columns:minmax(0,1fr)}
+  .legend dt{border-bottom:0;padding-bottom:0}
+  .legend dd{padding-top:4px}
+}
+.eyebrow a{color:inherit;text-decoration:none;border-bottom:1px solid var(--axis)}
+.eyebrow a:hover{color:var(--ink)}
+.notes{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.notes li{border-bottom:1px solid var(--rule)}
+.notes a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;align-items:baseline;padding:22px 0;color:inherit;text-decoration:none}
+.notes h2{grid-column:1}
+.notes .go{grid-column:2;font-family:var(--font-mono);font-size:13px;color:var(--a)}
+.notes .f,.notes p{grid-column:1 / -1}
+.notes .f{font-family:var(--font-mono);font-size:13px;color:var(--ink-3)}
+.notes p{color:var(--ink-2);font-size:15px}
+.notes a:hover h2{color:var(--a)}
+.notes a:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.lede a,.legend a{color:var(--a)}
+.read strong sup{font-size:.62em;line-height:0}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <p class="eyebrow"><a href="./">PhD encounters · interactive models</a></p>
+    <h1>The pH scale</h1>
+    <div class="intro">
+      <figure class="portrait">
+        <img src="img/sp-sorensen.jpg" width="260" height="348" alt="Black-and-white photo of S. P. L. Sørensen in a laboratory, holding up a test tube">
+        <figcaption><b>S. P. L. Sørensen</b> (1868–1939), chemist.<span>Photo: unknown author, Royal Library, Copenhagen. Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Soeren_Peter_Lauritz_Soerensen_1868-1939_2.jpg">Wikimedia Commons</a>.</span></figcaption>
+      </figure>
+      <div class="intro-text">
+        <p class="lede">In 1909 Søren Sørensen was head of chemistry at the Carlsberg Laboratory in Copenhagen, the research institute founded by the brewery in 1875. He was studying how acidity changes the way enzymes work, and he kept having to write numbers like 0.0000001 for the concentration of hydrogen ions. His fix was to write down only the exponent, with the sign flipped:</p>
+        <p class="formula">pH = −log<sub>10</sub> [H⁺]<small>[H⁺] is the concentration of hydrogen ions, in mol per litre</small></p>
+        <p class="lede">So 0.0000001 mol/L becomes pH 7, and each step down the scale means ten times more hydrogen ions. Leonor Michaelis took the idea up early: his 1913 experiments with Maud Menten on <a href="michaelis-menten.html">enzyme rates</a> depended on holding the pH still. In a fermentation it is the number that decides which microbes grow and how fast their enzymes work. Below you can make a solution and read its pH.</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="sim" aria-label="pH simulator">
+    <div class="row">
+      <button type="button" data-a="hcl" aria-pressed="false">Strong acid (HCl)</button>
+      <button type="button" data-a="lac" aria-pressed="true">Lactic acid</button>
+      <button type="button" data-a="ace" aria-pressed="false">Acetic acid</button>
+      <button type="button" data-a="naoh" aria-pressed="false">Strong base (NaOH)</button>
+    </div>
+    <div class="ctls">
+      <div class="ctl">
+        <label for="lc">Amount dissolved in water</label>
+        <input type="range" id="lc" min="-5" max="0" step="0.01" value="-2">
+        <output id="lc-out" for="lc">0.01 mol/L</output>
+      </div>
+    </div>
+    <div class="reads">
+      <div class="read"><span>pH</span><strong id="m-ph">2.94</strong></div>
+      <div class="read"><span>Hydrogen ions [H⁺]</span><strong id="m-h">1.1 × 10<sup>−3</sup> mol/L</strong></div>
+      <div class="read"><span>Split into ions</span><strong id="m-d">11%</strong></div>
+      <div class="read"><span>Weight dissolved</span><strong id="m-g">0.90 g/L</strong></div>
+      <div class="read"><span>Everyday comparison</span><strong id="m-r">Close to kombucha</strong></div>
+    </div>
+    <div class="fig">
+      <p class="cap">The scale. The marker is your solution. Below 7 is acidic, above 7 is basic.</p>
+      <div class="plot" style="height:104px">
+        <canvas id="strip" role="img" aria-label="The pH scale from 0 to 14 with a marker at the pH of the chosen solution">The pH scale from 0 to 14.</canvas>
+      </div>
+    </div>
+    <div class="key">
+      <span><i class="sw"></i>The substance you chose</span>
+      <span id="k-ref"><i class="sw b"></i>A strong acid, for comparison</span>
+      <span><i class="sw dot"></i>Your solution</span>
+    </div>
+    <div class="fig">
+      <p class="cap">pH against the amount dissolved. Vertical: pH. Horizontal: concentration in mol/L. Each step to the right is ten times more.</p>
+      <div class="plot" style="height:300px">
+        <canvas id="cur" role="img" aria-label="pH against concentration on a logarithmic axis: a straight line for a strong acid and a shallower line for a weak acid">pH against concentration.</canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What the values mean</h2>
+    <dl class="legend">
+      <dt>[H⁺] · hydrogen ions</dt>
+      <dd>How many hydrogen ions are loose in the water, in mol per litre. This is what makes a solution acidic. In pure water at 25 °C it is 0.0000001 mol/L.</dd>
+      <dt>pH</dt>
+      <dd>The exponent of that number with the sign flipped. Seven is neutral. One unit lower means ten times more hydrogen ions, one unit higher means ten times fewer. Sørensen wrote it p<sub>H</sub>. What the p stands for is still argued about, and “power” (Potenz in German) is the usual reading.</dd>
+      <dt>Amount dissolved</dt>
+      <dd>The concentration of the acid or base you add, in mol per litre. The slider moves in powers of ten, from 0.00001 to 1 mol/L.</dd>
+      <dt>Strong acid</dt>
+      <dd>An acid that splits completely in water, so every molecule gives up its hydrogen ion. Hydrochloric acid is the standard example.</dd>
+      <dt>Lactic and acetic acid</dt>
+      <dd>The acids of sour milk and of vinegar, and the two main acids of many ferments. Both are weak: only part of the molecules split, and the rest stay whole. Lactic acid has a pK<sub>a</sub> of 3.86 and acetic acid 4.76.</dd>
+      <dt>pK<sub>a</sub></dt>
+      <dd>The pH at which exactly half of a weak acid is split into ions. The lower the pK<sub>a</sub>, the stronger the acid.</dd>
+      <dt>Strong base</dt>
+      <dd>Sodium hydroxide releases hydroxide ions, which remove hydrogen ions from the water. The curve is the mirror image of the strong acid.</dd>
+      <dt>Split into ions</dt>
+      <dd>The share of the dissolved molecules that have given up their hydrogen ion. Always 100% for the strong acid and the strong base.</dd>
+      <dt>Weight dissolved</dt>
+      <dd>The same concentration in grams per litre, which is how you would weigh it out.</dd>
+      <dt>Everyday comparison</dt>
+      <dd>The closest entry in the table below.</dd>
+      <dt>Bottom chart</dt>
+      <dd>The pH for every concentration of the chosen substance. A strong acid draws a straight line: ten times more acid, one pH unit less. A weak acid draws a shallower line.</dd>
+    </dl>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Typical pH</th><th>Where you find it</th></tr></thead>
+        <tbody>
+          <tr><td>2.3</td><td>Lemon juice</td></tr>
+          <tr><td>2.5</td><td>Vinegar</td></tr>
+          <tr><td>3.0</td><td>Kombucha</td></tr>
+          <tr><td>3.4</td><td>Wine</td></tr>
+          <tr><td>4.3</td><td>Beer</td></tr>
+          <tr><td>5.0</td><td>Black coffee</td></tr>
+          <tr><td>6.6</td><td>Milk</td></tr>
+          <tr><td>7.0</td><td>Pure water at 25 °C</td></tr>
+          <tr><td>8.1</td><td>Sea water</td></tr>
+          <tr><td>11.5</td><td>Household ammonia</td></tr>
+          <tr><td>12.5</td><td>Bleach</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Try this</th><th>What it shows</th></tr></thead>
+        <tbody>
+          <tr><td>Strong acid, 0.001 → 0.01</td><td>Ten times more acid and the pH drops by exactly one unit, from 3 to 2. That is all a logarithm does.</td></tr>
+          <tr><td>Acetic acid, 0.001 → 0.01</td><td>The pH drops by only about half a unit. Most of the extra acid stays whole.</td></tr>
+          <tr><td>Lactic, then acetic, at 0.1</td><td>Same amount, different pH: about 2.4 against 2.9. Lactic acid is the stronger of the two. It gives up its hydrogen ion about eight times more readily.</td></tr>
+          <tr><td>Acetic acid at 50 g/L</td><td>The strength of kitchen vinegar. The model lands close to the 2.5 in the table.</td></tr>
+          <tr><td>Any weak acid, far left</td><td>The more you dilute a weak acid, the larger the share that splits into ions.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">Source: S. P. L. Sørensen, “Enzymstudien. II. Über die Messung und die Bedeutung der Wasserstoffionenkonzentration bei enzymatischen Prozessen”, Biochemische Zeitschrift 21, 131–304 (1909). The calculation treats concentration as activity, uses 25 °C, and for the weak acids ignores the hydrogen ions that water supplies on its own, which is safe at these concentrations. The values in the table are typical and real samples vary. The code in this repository was generated with Claude (Anthropic).</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const MONO='12px Arial, Helvetica, sans-serif';
+function pal(){const s=getComputedStyle(document.documentElement),v=n=>s.getPropertyValue(n).trim();return {a:v('--a'),b:v('--b'),grid:v('--grid'),axis:v('--axis'),tick:v('--ink-3'),ink:v('--ink')};}
+function fit(c){const w=c.parentElement.clientWidth,h=c.parentElement.clientHeight,d=window.devicePixelRatio||1;c.width=Math.max(1,Math.round(w*d));c.height=Math.max(1,Math.round(h*d));const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);return {ctx,w,h,d};}
+function onChange(cb){let t;const run=()=>{clearTimeout(t);t=setTimeout(cb,80);};window.addEventListener('resize',run);matchMedia('(prefers-color-scheme: dark)').addEventListener('change',run);new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run);}
+function path(c,pts,from,X,Y,col,dash,wd){c.beginPath();c.setLineDash(dash);c.strokeStyle=col;c.lineWidth=wd;c.lineJoin='round';c.lineCap='round';for(let i=from;i<pts.length;i++){const x=X(pts[i],i),y=Y(pts[i],i);if(i>from)c.lineTo(x,y);else c.moveTo(x,y);}c.stroke();c.setLineDash([]);}
+function disc(c,x,y,r,col){c.beginPath();c.fillStyle=col;c.arc(x,y,r,0,Math.PI*2);c.fill();}
+(function(){
+const KW=1e-14,L=44,R=14,TP=12,B=42;
+const A={
+  hcl:{M:36.46,strong:true},
+  lac:{M:90.08,pka:3.86},
+  ace:{M:60.05,pka:4.76},
+  naoh:{M:40.00,strong:true,base:true}
+};
+const REF=[[2.3,'lemon juice'],[2.5,'vinegar'],[3.0,'kombucha'],[3.4,'wine'],[4.3,'beer'],[5.0,'black coffee'],[6.6,'milk'],[7.0,'pure water'],[8.1,'sea water'],[11.5,'household ammonia'],[12.5,'bleach']];
+const strip=$('strip'),cur=$('cur'),lc=$('lc');
+let g1=fit(strip),g2=fit(cur),P=pal(),acid='lac';
+function hOf(k,C){
+  const a=A[k];
+  if(a.strong){const x=(C+Math.sqrt(C*C+4*KW))/2;return a.base?KW/x:x;}
+  const Ka=Math.pow(10,-a.pka);return (-Ka+Math.sqrt(Ka*Ka+4*Ka*C))/2;
+}
+const pH=(k,C)=>-Math.log10(hOf(k,C));
+function sig(v){return String(Number(v.toPrecision(2)));}
+function sci(v){let e=Math.floor(Math.log10(v)),m=(v/Math.pow(10,e)).toFixed(1);if(m==='10.0'){m='1.0';e++;}return e===0?m:m+' × 10<sup>'+(e<0?'−':'')+Math.abs(e)+'</sup>';}
+function near(p){
+  if(p<REF[0][0]-0.5)return 'More acidic than '+REF[0][1];
+  if(p>REF[REF.length-1][0]+0.5)return 'More basic than '+REF[REF.length-1][1];
+  let b=0;REF.forEach((r,i)=>{if(Math.abs(r[0]-p)<Math.abs(REF[b][0]-p))b=i;});
+  if(Math.abs(REF[b][0]-p)<=0.5)return 'Close to '+REF[b][1];
+  let i=0;while(i<REF.length-1&&REF[i+1][0]<p)i++;
+  return 'Between '+REF[i][1]+' and '+REF[i+1][1];
+}
+function draw(){
+  const C=Math.pow(10,+lc.value),a=A[acid],h=hOf(acid,C),p=-Math.log10(h);
+  $('lc-out').textContent=sig(C)+' mol/L';
+  $('m-ph').textContent=(Math.abs(p)<0.005?0:p).toFixed(2);
+  $('m-h').innerHTML=sci(h)+' mol/L';
+  $('m-d').textContent=a.strong?'100%':(100*h/C<10?(100*h/C).toFixed(1):Math.round(100*h/C))+'%';
+  $('m-g').textContent=sig(C*a.M)+' g/L';
+  $('m-r').textContent=near(p);
+  $('k-ref').hidden=!!a.strong;
+  // the scale
+  let c=g1.ctx,w=g1.w,hh=g1.h;const sl=18,sr=18,sw=w-sl-sr,X=v=>sl+v/14*sw;
+  c.clearRect(0,0,w,hh);c.font=MONO;
+  const gr=c.createLinearGradient(sl,0,sl+sw,0);gr.addColorStop(0,P.b);gr.addColorStop(0.5,P.grid);gr.addColorStop(1,P.a);
+  c.fillStyle=gr;c.fillRect(sl,30,sw,22);
+  c.strokeStyle=P.axis;c.lineWidth=1;c.strokeRect(sl+0.5,30.5,sw-1,21);
+  c.fillStyle=P.tick;c.textBaseline='alphabetic';
+  c.textAlign='left';c.fillText('acidic',sl,20);
+  c.textAlign='center';c.fillText('neutral',X(7),20);
+  c.textAlign='right';c.fillText('basic',sl+sw,20);
+  c.textAlign='center';c.textBaseline='top';
+  for(let v=0;v<=14;v++){c.strokeStyle=P.axis;c.beginPath();c.moveTo(X(v),52);c.lineTo(X(v),57);c.stroke();c.fillText(String(v),X(v),62);}
+  c.fillText('pH',X(7),82);
+  const mx=X(p);
+  c.fillStyle=P.ink;c.fillRect(mx-1.5,24,3,34);
+  c.beginPath();c.moveTo(mx-6,22);c.lineTo(mx+6,22);c.lineTo(mx,30);c.closePath();c.fill();
+  // pH against concentration
+  c=g2.ctx;w=g2.w;hh=g2.h;const pw=w-L-R,ph=hh-TP-B;
+  c.clearRect(0,0,w,hh);c.font=MONO;c.lineWidth=1;
+  const Y=v=>TP+(1-v/14)*ph,XC=v=>L+(v+5)/5*pw;
+  c.textAlign='right';c.textBaseline='middle';
+  for(let v=0;v<=14;v+=2){c.strokeStyle=v===0?P.axis:P.grid;c.beginPath();c.moveTo(L,Y(v));c.lineTo(L+pw,Y(v));c.stroke();c.fillStyle=P.tick;c.fillText(String(v),L-8,Y(v));}
+  c.strokeStyle=P.tick;c.setLineDash([2,4]);c.beginPath();c.moveTo(L,Y(7));c.lineTo(L+pw,Y(7));c.stroke();c.setLineDash([]);
+  c.fillStyle=P.tick;c.textAlign='right';c.textBaseline='bottom';c.fillText('neutral, pH 7',L+pw-4,Y(7)-4);
+  c.textAlign='center';c.textBaseline='top';
+  ['0.00001','0.0001','0.001','0.01','0.1','1'].forEach((t,i)=>{if(pw<380&&(i===1||i===3))return;c.textAlign=i===0?'left':i===5?'right':'center';c.fillText(t,XC(i-5)+(i===0?-6:i===5?6:0),TP+ph+8);});
+  c.textAlign='center';c.fillText('concentration (mol/L)',L+pw/2,TP+ph+25);
+  const pts=[];for(let i=0;i<=200;i++)pts.push(-5+5*i/200);
+  if(!a.strong)path(c,pts,0,v=>XC(v),v=>Y(pH('hcl',Math.pow(10,v))),P.b,[6,4],2);
+  path(c,pts,0,v=>XC(v),v=>Y(pH(acid,Math.pow(10,v))),P.a,[],2);
+  disc(c,XC(+lc.value),Y(p),5,P.b);
+}
+document.querySelectorAll('button[data-a]').forEach(b=>b.addEventListener('click',()=>{
+  acid=b.dataset.a;
+  document.querySelectorAll('button[data-a]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+  draw();
+}));
+lc.addEventListener('input',draw);
+onChange(()=>{g1=fit(strip);g2=fit(cur);P=pal();draw();});
+draw();
+})();
+</script>
+</body>
+</html>
