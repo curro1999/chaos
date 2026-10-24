@@ -10,6 +10,7 @@ Live site: https://curro1999.github.io/chaos/
 | [Period doubling and chaos](https://curro1999.github.io/chaos/bifurcation-diagram-explorer.html) | The bifurcation diagram of the logistic map, with zoom |
 | [The Lorenz attractor](https://curro1999.github.io/chaos/lorenz-twin-trajectories.html) | Two nearly identical trajectories and sensitive dependence on initial conditions |
 | [The Mandelbrot set](https://curro1999.github.io/chaos/mandelbrot-set.html) | The logistic map in the complex plane, with zoom and the orbit of any chosen point |
+| [The Koch curve](https://curro1999.github.io/chaos/koch-curve.html) | The construction step by step, the snowflake, and the dimension read off a log-log plot |
 | [Predators and prey](https://curro1999.github.io/chaos/lotka-volterra.html) | The Lotka–Volterra model, with a fishing effort slider for Volterra's principle |
 | [The Monod equation](https://curro1999.github.io/chaos/monod-growth.html) | Microbial growth on a limiting nutrient and the batch culture curve |
 | [The pH scale](https://curro1999.github.io/chaos/ph-scale.html) | Sørensen's scale: the pH of strong and weak acids at any concentration |
@@ -26,6 +27,8 @@ Each page is a single self-contained HTML file with no build step.
 - B. B. Mandelbrot, "Fractal aspects of the iteration of z → λz(1 − z) for complex λ and z", Annals of the New York Academy of Sciences 357, 249–259 (1980).
 - S. P. L. Sørensen, "Enzymstudien. II. Über die Messung und die Bedeutung der Wasserstoffionenkonzentration bei enzymatischen Prozessen", Biochemische Zeitschrift 21, 131–304 (1909).
 - L. Michaelis and M. L. Menten, "Die Kinetik der Invertinwirkung", Biochemische Zeitschrift 49, 333–369 (1913).
+- H. von Koch, "Sur une courbe continue sans tangente, obtenue par une construction géométrique élémentaire", Arkiv för Matematik, Astronomi och Fysik 1, 681–704 (1904).
+- B. B. Mandelbrot, "How long is the coast of Britain? Statistical self-similarity and fractional dimension", Science 156, 636–638 (1967).
 
 ## Credits
 
@@ -39,4 +42,4 @@ Portraits of Vito Volterra (unknown author, c. 1910) and Jacques Monod (Farabola
 
 Photo of Benoit Mandelbrot: Rama, [CC BY-SA 2.0 FR](https://creativecommons.org/licenses/by-sa/2.0/fr/deed.en), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Benoit_Mandelbrot_mg_1804-d.jpg). Cropped and converted to black and white; this version is shared under the same licence.
 
-Portraits of S. P. L. Sørensen (unknown author, Royal Library, Copenhagen) and Leonor Michaelis (Hermann Noack, c. 1900): public domain, via Wikimedia Commons. Photo of Maud Menten: Smithsonian Institution, no known copyright restrictions, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Maud_Leonora_Menten_(cropped).jpg).
+Portraits of S. P. L. Sørensen (unknown author, Royal Library, Copenhagen), Leonor Michaelis (Hermann Noack, c. 1900) and Helge von Koch (Olof Edlund, SVAF): public domain, via Wikimedia Commons. Photo of Maud Menten: Smithsonian Institution, no known copyright restrictions, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Maud_Leonora_Menten_(cropped).jpg).
