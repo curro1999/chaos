@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Dance Floor</title>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: one reading column. Context on top, the simulator in a single ruled panel, then the legend of values and the steps to try. */
+:root{
+  --bg:#f1f3f5; --panel:#fbfcfd; --ink:#16202a; --ink-2:#45525f; --ink-3:#64707d;
+  --rule:#d3d9df; --grid:#e4e8ec; --axis:#b9c2cb; --a:#1c5fc4; --b:#cf5417; --c:#2a9d5c;
+  --floor:#1a1f2b; --floor-line:#2b3242; --bar:#3b2f22; --door:#4a3a2a;
+  --font-display:Arial,Helvetica,sans-serif;
+  --font-body:Arial,Helvetica,sans-serif;
+  --font-mono:Arial,Helvetica,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+    --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; --c:#5fcf8a;
+    --floor:#0a0d14; --floor-line:#1b2130; --bar:#2a2119; --door:#352a1e; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1218; --panel:#131a22; --ink:#e6ebf0; --ink-2:#aab5c0; --ink-3:#8491a0;
+  --rule:#27313c; --grid:#1e2731; --axis:#3a4653; --a:#62a0f2; --b:#f08a52; --c:#5fcf8a;
+  --floor:#0a0d14; --floor-line:#1b2130; --bar:#2a2119; --door:#352a1e; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;margin:0}
+.page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
+.top{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.eyebrow a{color:inherit;text-decoration:none}
+.eyebrow a:hover{text-decoration:underline}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(32px,7vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:700;font-size:22px;line-height:1.2;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;max-width:66ch}
+.formula{font-family:var(--font-mono);font-size:clamp(15px,3.6vw,19px);line-height:1.7;color:var(--ink);max-width:none}
+.formula small{display:block;font-size:13px;color:var(--ink-3)}
+.lede{font-size:17px;color:var(--ink-2)}
+.block{display:flex;flex-direction:column;gap:18px}
+.sim{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.ctls{display:flex;flex-direction:column;gap:12px}
+.ctl{display:grid;grid-template-columns:180px minmax(0,1fr) 112px;grid-template-areas:"l s o";align-items:center;gap:12px}
+.ctl label{grid-area:l;font-size:14px;color:var(--ink-2)}
+.ctl input{grid-area:s;width:100%;margin:0;accent-color:var(--a)}
+.ctl output{grid-area:o;text-align:right;font-family:var(--font-mono);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row .lbl{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);margin-right:4px}
+button{font-family:var(--font-mono);font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--axis);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--grid)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.check input{accent-color:var(--b);width:16px;height:16px;margin:0}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+.read{border-top:1px solid var(--rule);padding-top:10px;min-width:0}
+.read span{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.read strong{display:block;font-family:var(--font-display);font-weight:600;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2)}
+.key span{display:inline-flex;align-items:center}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle;flex:none}
+.cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);max-width:none}
+.fig{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plot{position:relative;width:100%}
+.plot canvas{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:4px}
+.legend{margin:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--rule)}
+.legend dt,.legend dd{margin:0;padding:12px 0;border-bottom:1px solid var(--rule)}
+.legend dt{font-family:var(--font-mono);font-size:13px;font-weight:500;padding-right:16px}
+.legend dd{color:var(--ink-2);font-size:15px}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:32px minmax(0,1fr);max-width:70ch;color:var(--ink-2)}
+.steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
+.steps b,.legend b{font-weight:600;color:var(--ink)}
+.foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
+.intro{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+@media (max-width:600px){
+  .sim{padding:16px}
+  .ctl{grid-template-columns:minmax(0,1fr) 90px;grid-template-areas:"l o" "s s"}
+  .legend{grid-template-columns:1fr}
+  .legend dt{padding-bottom:2px;border-bottom:0}
+  .legend dd{padding-top:2px}
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <p class="eyebrow"><a href="./">PhD encounters · interactive models</a></p>
+    <h1>The dance floor</h1>
+    <div class="intro">
+      <p class="lede">In 1909 the German biologist Richard Woltereck was raising water fleas (<i>Daphnia</i>) in tanks with different amounts of food, and noticed that the same lineage grew a different head shape in each tank. The organism had not changed; the water had. He called the full set of shapes a lineage can take, one for each environment, its <i>Reaktionsnorm</i>, the norm of reaction. Two years later Wilhelm Johannsen gave the two sides of that idea their names: the <b>genotype</b> is what is written in the cell, the <b>phenotype</b> is what the cell actually does.</p>
+      <p class="formula">phenotype = genotype × environment<small>the same genotype, placed in two environments, gives two phenotypes</small></p>
+      <p class="lede">A fermentation is this sentence run with microbes. A yeast strain carries one genotype; the temperature, the sugar, the oxygen and the acidity of the tank decide which of its possible behaviours shows up, and those behaviours are the aroma, the alcohol and the acidity we taste. Below, the same idea in a form that needs no microscope: a club, a control booth behind the glass, and two knobs. Watch who dances, who goes to the bar and who leaves.</p>
+    </div>
+  </header>
+
+  <section class="sim" aria-label="Dance floor simulator">
+    <div class="ctls">
+      <div class="ctl">
+        <label for="temp">Temperature</label>
+        <input type="range" id="temp" min="14" max="38" step="0.5" value="22">
+        <output id="temp-out" for="temp">22.0 °C</output>
+      </div>
+      <div class="ctl">
+        <label for="music">Music</label>
+        <input type="range" id="music" min="0" max="100" step="1" value="50">
+        <output id="music-out" for="music">50 %</output>
+      </div>
+    </div>
+    <div class="row">
+      <span class="lbl">Presets</span>
+      <button type="button" data-t="18" data-m="20">Cold · quiet</button>
+      <button type="button" data-t="18" data-m="90">Cold · loud</button>
+      <button type="button" data-t="33" data-m="20">Hot · quiet</button>
+      <button type="button" data-t="33" data-m="90">Hot · loud</button>
+      <button type="button" id="reset">Reset the night</button>
+      <label class="check"><input type="checkbox" id="showg" checked> Show genotypes</label>
+    </div>
+    <div class="reads">
+      <div class="read"><span>On the floor</span><strong id="r-floor">0</strong></div>
+      <div class="read"><span>At the bar</span><strong id="r-bar">0</strong></div>
+      <div class="read"><span>Beers bought</span><strong id="r-beer">0</strong></div>
+      <div class="read"><span>Beers per minute</span><strong id="r-bpm">0.0</strong></div>
+      <div class="read"><span>Sweat index</span><strong id="r-sweat">0 %</strong></div>
+      <div class="read"><span>Left the club</span><strong id="r-left">0</strong></div>
+      <div class="read"><span>Inside: ravers</span><strong id="r-raver" style="color:#4ea1ff">0</strong></div>
+      <div class="read"><span>Inside: talkers</span><strong id="r-talker" style="color:#ff8a4e">0</strong></div>
+      <div class="read"><span>Inside: swayers</span><strong id="r-swayer" style="color:#5fd08a">0</strong></div>
+    </div>
+    <div class="key" id="key">
+      <span><i class="sw" style="background:#4ea1ff"></i>Ravers, love loud music, stand the heat</span>
+      <span><i class="sw" style="background:#ff8a4e"></i>Talkers, prefer it quiet, melt when it is hot</span>
+      <span><i class="sw" style="background:#5fd08a"></i>Swayers, go along with whatever is on</span>
+    </div>
+    <div class="fig">
+      <p class="cap">Seen from the booth. The floor is on the left, the bar on the right, the door at the bottom. Each dot is a person; a bigger, brighter dot is dancing harder, a pale halo is sweat.</p>
+      <div class="plot" style="height:420px">
+        <canvas id="club" role="img" aria-label="Top-down view of a club: people as dots on a dance floor, a bar on the right, a door at the bottom">People moving on a dance floor under the chosen temperature and music.</canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What the values mean</h2>
+    <dl class="legend">
+      <dt>Temperature, music</dt><dd>The <b>environment</b>. The two things the booth controls. Nobody on the floor can change them.</dd>
+      <dt>Ravers, talkers, swayers</dt><dd>Three <b>genotypes</b>. Each person is born with a preferred music level and a heat tolerance and keeps them all night. Ravers want it loud and shrug off heat; talkers want it quiet and suffer when it is hot; swayers are in between and mostly copy the crowd. Think of them as three strains in the same tank.</dd>
+      <dt>Dancing, at the bar, leaving</dt><dd>The <b>phenotype</b>: what each person actually does. A raver on a quiet night and a raver on a loud night are the same genotype showing two behaviours.</dd>
+      <dt>Beers bought</dt><dd>A measurable product of the crowd's metabolism. Thirst builds with temperature and with how hard people dance; when it is high enough, a person walks to the bar, buys a beer and comes back.</dd>
+      <dt>Sweat index</dt><dd>Average of temperature times dancing effort over the people on the floor. A loud, hot night is a wet one. Like beer, it is something the booth never set but can read off the room.</dd>
+      <dt>Left the club</dt><dd>People whose comfort stayed low for too long. New people arrive at the door at a rate that follows the mood inside, so a good night fills up and a bad one empties.</dd>
+    </dl>
+  </section>
+
+  <section class="block">
+    <h2>Things to try</h2>
+    <ol class="steps">
+      <li><span>Press <b>Cold · quiet</b> and wait half a minute. The talkers (orange) stay and chat, the ravers (blue) drift to the door. Same room, one genotype thrives, another leaves.</span></li>
+      <li><span>Now press <b>Cold · loud</b>. Watch the colours swap roles: the ravers fill the floor and the talkers go. The genotypes did not change. The phenotypes did.</span></li>
+      <li><span>Go <b>Hot · loud</b>. Beers per minute and the sweat index climb together, and even the ravers start walking to the bar. The product you can measure (beer, sweat) is not something you set; it comes out of what the crowd is doing to cope with the room.</span></li>
+      <li><span>Hold the music at 50 % and slide the temperature slowly from 14 to 38 °C. The orange population falls off before the blue one. That curve, how one genotype's behaviour changes along one environmental axis, is Woltereck's norm of reaction.</span></li>
+      <li><span>Untick <b>Show genotypes</b> and set any corner. With all dots the same grey you only see the phenotype, which is all a glass of fermented tea ever shows you. The genotype is still there, deciding who does what.</span></li>
+      <li><span>Finally, replace the words. Temperature and music are temperature and dissolved oxygen. Ravers and talkers are <i>Saccharomyces</i> and a lactic acid bacterium. Beer is ethanol, sweat is acidity. The booth is the brewer.</span></li>
+    </ol>
+  </section>
+
+  <p class="foot">Sources: R. Woltereck, “Weitere experimentelle Untersuchungen über Artveränderung, speziell über das Wesen quantitativer Artunterschiede bei Daphniden”, Verhandlungen der Deutschen Zoologischen Gesellschaft 19, 110–173 (1909); W. Johannsen, “The genotype conception of heredity”, The American Naturalist 45, 129–159 (1911). The simulation is an agent-based toy with no claim to realism; every number in it was chosen to make the idea visible. The code in this repository was generated with Claude (Anthropic).</p>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const cv = $('club'), ctx = cv.getContext('2d');
+  const tempIn = $('temp'), musicIn = $('music');
+  const showG = $('showg');
+
+  // Genotypes: fixed preferences a person is born with.
+  const GENO = {
+    raver:  { color:'#4ea1ff', music:0.9, heat:0.95, label:'raver' },
+    talker: { color:'#ff8a4e', music:0.15, heat:0.35, label:'talker' },
+    swayer: { color:'#5fd08a', music:0.5, heat:0.6,  label:'swayer' }
+  };
+  const TYPES = ['raver','talker','swayer'];
+
+  // World geometry in unit coordinates (0..1), scaled at draw time.
+  const FLOOR = {x0:0.04, y0:0.06, x1:0.70, y1:0.86};
+  const BAR   = {x0:0.78, y0:0.10, x1:0.96, y1:0.70};
+  const DOOR  = {x0:0.30, y0:0.93, x1:0.44, y1:1.00};
+
+  let people = [], beers = 0, left = 0, t = 0, beerLog = [];
+  let W = 0, H = 0, dpr = 1;
+  const rnd = (a,b) => a + Math.random()*(b-a);
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+  function makePerson(type, atDoor){
+    const g = GENO[type];
+    const p = {
+      type, g,
+      x: atDoor ? rnd(DOOR.x0, DOOR.x1) : rnd(FLOOR.x0+0.03, FLOOR.x1-0.03),
+      y: atDoor ? 0.95 : rnd(FLOOR.y0+0.03, FLOOR.y1-0.03),
+      hx: 0, hy: 0,          // home spot on the floor
+      vx: 0, vy: 0,
+      phase: rnd(0, Math.PI*2),
+      // individual variation around the genotype
+      music: clamp(g.music + rnd(-0.12, 0.12), 0, 1),
+      heat:  clamp(g.heat  + rnd(-0.12, 0.12), 0, 1),
+      thirst: rnd(0, 0.5),
+      discomfort: 0,
+      state: 'floor',       // floor | tobar | bar | tofloor | leaving
+      wait: 0,
+      intensity: 0, sweat: 0
+    };
+    p.hx = rnd(FLOOR.x0+0.04, FLOOR.x1-0.04);
+    p.hy = rnd(FLOOR.y0+0.04, FLOOR.y1-0.04);
+    return p;
+  }
+
+  function reset(){
+    people = []; beers = 0; left = 0; t = 0; beerLog = [];
+    for (let i=0;i<60;i++) people.push(makePerson(TYPES[i%3], false));
+  }
+
+  // Environment in 0..1
+  function env(){
+    const T = (parseFloat(tempIn.value) - 14) / 24;   // 14..38 °C
+    const M = parseFloat(musicIn.value) / 100;
+    return {T, M};
+  }
+
+  function step(dt){
+    const {T, M} = env();
+    t += dt;
+    let onFloor = 0, atBar = 0, sweatSum = 0, happySum = 0, n = 0;
+
+    for (const p of people){
+      // comfort with music and heat, 0..1
+      const cm = 1 - Math.abs(M - p.music);
+      const over = Math.max(0, T - p.heat);
+      const ch = 1 - over*1.8;
+      const comfort = clamp(cm * ch, 0, 1);
+      // dancing intensity: wants loud music, more so if it suits you
+      p.intensity = clamp(M * (0.35 + 0.65*cm) * (p.state==='floor' ? 1 : 0.2), 0, 1);
+      p.sweat = clamp(T * (0.25 + 0.9*p.intensity), 0, 1);
+      // thirst builds with heat and effort
+      p.thirst += dt * (0.004 + 0.022*T + 0.02*p.intensity);
+      // discomfort accumulates when comfort is low
+      p.discomfort += dt * ((0.5 - comfort) * 0.5);
+      p.discomfort = clamp(p.discomfort, 0, 2);
+
+      // transitions
+      if (p.state === 'floor'){
+        if (p.discomfort > 1.5 && Math.random() < dt*0.5){ p.state = 'leaving'; }
+        else if (p.thirst > 1 && Math.random() < dt*1.5){ p.state = 'tobar'; p.tx = rnd(BAR.x0-0.03, BAR.x0+0.0); p.ty = rnd(BAR.y0+0.04, BAR.y1-0.04); }
+      } else if (p.state === 'tobar'){
+        if (near(p, p.tx, p.ty)) { p.state = 'bar'; p.wait = rnd(4, 8); }
+      } else if (p.state === 'bar'){
+        p.wait -= dt;
+        if (p.wait <= 0){ beers++; beerLog.push(t); p.thirst = 0; p.state = 'tofloor'; p.hx = rnd(FLOOR.x0+0.04, FLOOR.x1-0.04); p.hy = rnd(FLOOR.y0+0.04, FLOOR.y1-0.04); }
+      } else if (p.state === 'tofloor'){
+        if (near(p, p.hx, p.hy)) p.state = 'floor';
+      }
+
+      // movement
+      let tx = p.hx, ty = p.hy, speed = 0.08;
+      if (p.state === 'tobar'){ tx = p.tx; ty = p.ty; speed = 0.16; }
+      else if (p.state === 'bar'){ tx = p.tx; ty = p.ty; speed = 0.1; }
+      else if (p.state === 'leaving'){ tx = (DOOR.x0+DOOR.x1)/2; ty = 0.97; speed = 0.14; }
+      else if (p.state === 'floor'){
+        // dancers wander around their home spot; the louder, the more they move
+        if (Math.random() < dt*0.6){
+          const r = 0.03 + 0.1*p.intensity;
+          p.hx = clamp(p.hx + rnd(-r, r), FLOOR.x0+0.03, FLOOR.x1-0.03);
+          p.hy = clamp(p.hy + rnd(-r, r), FLOOR.y0+0.03, FLOOR.y1-0.03);
+        }
+        speed = 0.05 + 0.12*p.intensity;
+      }
+      const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy) || 1e-6;
+      p.vx += (dx/d*speed - p.vx) * Math.min(1, dt*4);
+      p.vy += (dy/d*speed - p.vy) * Math.min(1, dt*4);
+      // gentle repulsion so dots do not pile up
+      for (const q of people){ if (q===p) continue; const ex=p.x-q.x, ey=p.y-q.y, e=ex*ex+ey*ey; if (e < 0.0009 && e>0){ const f = dt*0.02/Math.sqrt(e); p.vx += ex*f; p.vy += ey*f; } }
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      p.phase += dt * (2 + 10*p.intensity);
+
+      if (p.state === 'floor'){ onFloor++; sweatSum += p.sweat; }
+      if (p.state === 'bar' || p.state === 'tobar') atBar++;
+      happySum += comfort; n++;
+    }
+
+    // people who reached the door leave
+    const before = people.length;
+    people = people.filter(p => !(p.state==='leaving' && p.y > 0.955));
+    left += before - people.length;
+
+    // arrivals follow the mood inside, capped
+    const mood = n ? happySum/n : 0.5;
+    if (people.length < 70 && Math.random() < dt * (0.05 + 0.7*mood*mood)){
+      people.push(makePerson(TYPES[Math.floor(Math.random()*3)], true));
+    }
+
+    // readouts
+    const win = 20; // seconds window for the beer rate
+    beerLog = beerLog.filter(s => t - s < win);
+    const bpm = beerLog.length * (60/win);
+    $('r-floor').textContent = onFloor;
+    $('r-bar').textContent = atBar;
+    $('r-beer').textContent = beers;
+    $('r-bpm').textContent = bpm.toFixed(1);
+    $('r-sweat').textContent = Math.round(onFloor ? 100*sweatSum/onFloor : 0) + ' %';
+    $('r-left').textContent = left;
+    const cnt = {raver:0, talker:0, swayer:0};
+    for (const p of people) if (p.state !== 'leaving') cnt[p.type]++;
+    $('r-raver').textContent = cnt.raver; $('r-talker').textContent = cnt.talker; $('r-swayer').textContent = cnt.swayer;
+  }
+  function near(p, x, y){ return Math.hypot(p.x-x, p.y-y) < 0.02; }
+
+  function resize(){
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    const r = cv.getBoundingClientRect();
+    W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  function draw(){
+    const {T, M} = env();
+    ctx.clearRect(0,0,W,H);
+    // room: warmer tint with temperature
+    const warm = Math.round(T*40);
+    ctx.fillStyle = `rgb(${18+warm},${22+Math.round(warm*0.3)},${35-Math.round(warm*0.4)})`;
+    ctx.fillRect(0,0,W,H);
+    // floor
+    ctx.fillStyle = css('--floor');
+    rr(FLOOR.x0*W, FLOOR.y0*H, (FLOOR.x1-FLOOR.x0)*W, (FLOOR.y1-FLOOR.y0)*H, 6); ctx.fill();
+    // floor tiles pulse with the music
+    ctx.strokeStyle = css('--floor-line'); ctx.lineWidth = 1;
+    const beat = 0.5 + 0.5*Math.sin(t*(4+8*M));
+    ctx.globalAlpha = 0.5 + 0.5*M*beat;
+    for (let i=1;i<6;i++){ const x = FLOOR.x0*W + i*(FLOOR.x1-FLOOR.x0)*W/6; ctx.beginPath(); ctx.moveTo(x, FLOOR.y0*H); ctx.lineTo(x, FLOOR.y1*H); ctx.stroke(); }
+    for (let j=1;j<5;j++){ const y = FLOOR.y0*H + j*(FLOOR.y1-FLOOR.y0)*H/5; ctx.beginPath(); ctx.moveTo(FLOOR.x0*W, y); ctx.lineTo(FLOOR.x1*W, y); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    // bar
+    ctx.fillStyle = css('--bar');
+    rr(BAR.x0*W, BAR.y0*H, (BAR.x1-BAR.x0)*W, (BAR.y1-BAR.y0)*H, 6); ctx.fill();
+    // door
+    ctx.fillStyle = css('--door');
+    ctx.fillRect(DOOR.x0*W, DOOR.y0*H, (DOOR.x1-DOOR.x0)*W, (DOOR.y1-DOOR.y0)*H);
+    // labels
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '11px Arial, Helvetica, sans-serif'; ctx.textBaseline = 'top';
+    ctx.fillText('FLOOR', FLOOR.x0*W+8, FLOOR.y0*H+6);
+    ctx.fillText('BAR', BAR.x0*W+8, BAR.y0*H+6);
+    ctx.fillText('DOOR', DOOR.x1*W+6, DOOR.y0*H+4);
+    ctx.fillText('BOOTH · you are here', FLOOR.x0*W+8, H-16);
+
+    // people
+    const g = showG.checked;
+    for (const p of people){
+      const x = p.x*W, y = p.y*H;
+      const bounce = p.state==='floor' ? Math.sin(p.phase)*2*p.intensity : 0;
+      const r = 4 + 3*p.intensity;
+      if (p.sweat > 0.35){
+        ctx.beginPath(); ctx.arc(x, y+bounce, r + 6*p.sweat, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(190,220,255,${0.08 + 0.22*p.sweat})`; ctx.fill();
+      }
+      ctx.beginPath(); ctx.arc(x, y+bounce, r, 0, Math.PI*2);
+      let col = g ? p.g.color : '#cfd6de';
+      ctx.fillStyle = col; ctx.globalAlpha = 0.55 + 0.45*(p.state==='floor' ? p.intensity : 0.3); ctx.fill();
+      ctx.globalAlpha = 1;
+      if (p.state === 'bar'){ ctx.fillStyle = '#f3c969'; ctx.fillRect(x+r+2, y-3, 3, 6); }
+    }
+  }
+  function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  // controls
+  function fmt(){
+    $('temp-out').textContent = parseFloat(tempIn.value).toFixed(1) + ' °C';
+    $('music-out').textContent = musicIn.value + ' %';
+  }
+  tempIn.addEventListener('input', fmt); musicIn.addEventListener('input', fmt);
+  document.querySelectorAll('button[data-t]').forEach(b => b.addEventListener('click', () => {
+    tempIn.value = b.dataset.t; musicIn.value = b.dataset.m; fmt();
+  }));
+  $('reset').addEventListener('click', reset);
+  new ResizeObserver(resize).observe(cv);
+
+  // loop
+  let last = performance.now();
+  function frame(now){
+    let dt = Math.min(0.05, (now - last)/1000); last = now;
+    step(dt); draw();
+    requestAnimationFrame(frame);
+  }
+  resize(); reset(); fmt(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
