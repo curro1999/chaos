@@ -29,7 +29,7 @@
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;margin:0}
-.page{max-width:820px;margin:0 auto;padding-block:44px 64px;padding-inline:20px;display:flex;flex-direction:column;gap:44px}
+.page{max-width:900px;margin:0 auto;padding-block:28px 48px;padding-inline:20px;display:flex;flex-direction:column;gap:24px}
 .top{display:flex;flex-direction:column;gap:14px}
 .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0}
 .eyebrow a{color:inherit;text-decoration:none}
@@ -75,7 +75,9 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
 .steps li::before{content:counter(s);font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--a);padding-top:3px}
 .steps b,.legend b{font-weight:600;color:var(--ink)}
 .foot{font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px;max-width:none}
-.intro{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+.head{display:flex;align-items:center;gap:22px}
+.logo{width:96px;height:auto;flex:none;background:#fff;border-radius:8px;padding:6px}
+.head h1{font-size:clamp(22px,4.5vw,32px)}
 @media (max-width:600px){
   .sim{padding:16px}
   .ctl{grid-template-columns:minmax(0,1fr) 90px;grid-template-areas:"l o" "s s"}
@@ -87,13 +89,11 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
 </head>
 <body>
 <main class="page">
-  <header class="top">
-    <p class="eyebrow"><a href="./">PhD encounters · interactive models</a></p>
-    <h1>The dance floor</h1>
-    <div class="intro">
-      <p class="lede">In 1909 the German biologist Richard Woltereck was raising water fleas (<i>Daphnia</i>) in tanks with different amounts of food, and noticed that the same lineage grew a different head shape in each tank. The organism had not changed; the water had. He called the full set of shapes a lineage can take, one for each environment, its <i>Reaktionsnorm</i>, the norm of reaction. Two years later Wilhelm Johannsen gave the two sides of that idea their names: the <b>genotype</b> is what is written in the cell, the <b>phenotype</b> is what the cell actually does.</p>
-      <p class="formula">phenotype = genotype × environment<small>the same genotype, placed in two environments, gives two phenotypes</small></p>
-      <p class="lede">A fermentation is this sentence run with microbes. A yeast strain carries one genotype; the temperature, the sugar, the oxygen and the acidity of the tank decide which of its possible behaviours shows up, and those behaviours are the aroma, the alcohol and the acidity we taste. Below, the same idea in a form that needs no microscope: a club, a control booth behind the glass, and two knobs. Watch who dances, who goes to the bar and who leaves.</p>
+  <header class="head">
+    <img class="logo" src="img/dabadaba.png" width="281" height="214" alt="Dabadaba">
+    <div>
+      <p class="eyebrow">From the booth</p>
+      <h1>Same genotype, different phenotype</h1>
     </div>
   </header>
 
@@ -117,57 +117,22 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
       <button type="button" data-t="33" data-m="20">Hot · quiet</button>
       <button type="button" data-t="33" data-m="90">Hot · loud</button>
       <button type="button" id="reset">Reset the night</button>
-      <label class="check"><input type="checkbox" id="showg" checked> Show genotypes</label>
     </div>
     <div class="reads">
-      <div class="read"><span>On the floor</span><strong id="r-floor">0</strong></div>
+      <div class="read"><span>Inside</span><strong id="r-in">0</strong></div>
+      <div class="read"><span>Dancing</span><strong id="r-dance">0</strong></div>
       <div class="read"><span>At the bar</span><strong id="r-bar">0</strong></div>
-      <div class="read"><span>Beers bought</span><strong id="r-beer">0</strong></div>
       <div class="read"><span>Beers per minute</span><strong id="r-bpm">0.0</strong></div>
       <div class="read"><span>Sweat index</span><strong id="r-sweat">0 %</strong></div>
       <div class="read"><span>Left the club</span><strong id="r-left">0</strong></div>
-      <div class="read"><span>Inside: ravers</span><strong id="r-raver" style="color:#4ea1ff">0</strong></div>
-      <div class="read"><span>Inside: talkers</span><strong id="r-talker" style="color:#ff8a4e">0</strong></div>
-      <div class="read"><span>Inside: swayers</span><strong id="r-swayer" style="color:#5fd08a">0</strong></div>
-    </div>
-    <div class="key" id="key">
-      <span><i class="sw" style="background:#4ea1ff"></i>Ravers, love loud music, stand the heat</span>
-      <span><i class="sw" style="background:#ff8a4e"></i>Talkers, prefer it quiet, melt when it is hot</span>
-      <span><i class="sw" style="background:#5fd08a"></i>Swayers, go along with whatever is on</span>
     </div>
     <div class="fig">
-      <p class="cap">Seen from the booth. The floor is on the left, the bar on the right, the door at the bottom. Each dot is a person; a bigger, brighter dot is dancing harder, a pale halo is sweat.</p>
-      <div class="plot" style="height:420px">
+      <p class="cap">Everyone in the room carries the same genotype. Each dot is a person; a bigger, brighter dot is dancing harder, a pale halo is sweat, a yellow mark is a beer.</p>
+      <div class="plot" style="height:460px">
         <canvas id="club" role="img" aria-label="Top-down view of a club: people as dots on a dance floor, a bar on the right, a door at the bottom">People moving on a dance floor under the chosen temperature and music.</canvas>
       </div>
     </div>
   </section>
-
-  <section class="block">
-    <h2>What the values mean</h2>
-    <dl class="legend">
-      <dt>Temperature, music</dt><dd>The <b>environment</b>. The two things the booth controls. Nobody on the floor can change them.</dd>
-      <dt>Ravers, talkers, swayers</dt><dd>Three <b>genotypes</b>. Each person is born with a preferred music level and a heat tolerance and keeps them all night. Ravers want it loud and shrug off heat; talkers want it quiet and suffer when it is hot; swayers are in between and mostly copy the crowd. Think of them as three strains in the same tank.</dd>
-      <dt>Dancing, at the bar, leaving</dt><dd>The <b>phenotype</b>: what each person actually does. A raver on a quiet night and a raver on a loud night are the same genotype showing two behaviours.</dd>
-      <dt>Beers bought</dt><dd>A measurable product of the crowd's metabolism. Thirst builds with temperature and with how hard people dance; when it is high enough, a person walks to the bar, buys a beer and comes back.</dd>
-      <dt>Sweat index</dt><dd>Average of temperature times dancing effort over the people on the floor. A loud, hot night is a wet one. Like beer, it is something the booth never set but can read off the room.</dd>
-      <dt>Left the club</dt><dd>People whose comfort stayed low for too long. New people arrive at the door at a rate that follows the mood inside, so a good night fills up and a bad one empties.</dd>
-    </dl>
-  </section>
-
-  <section class="block">
-    <h2>Things to try</h2>
-    <ol class="steps">
-      <li><span>Press <b>Cold · quiet</b> and wait half a minute. The talkers (orange) stay and chat, the ravers (blue) drift to the door. Same room, one genotype thrives, another leaves.</span></li>
-      <li><span>Now press <b>Cold · loud</b>. Watch the colours swap roles: the ravers fill the floor and the talkers go. The genotypes did not change. The phenotypes did.</span></li>
-      <li><span>Go <b>Hot · loud</b>. Beers per minute and the sweat index climb together, and even the ravers start walking to the bar. The product you can measure (beer, sweat) is not something you set; it comes out of what the crowd is doing to cope with the room.</span></li>
-      <li><span>Hold the music at 50 % and slide the temperature slowly from 14 to 38 °C. The orange population falls off before the blue one. That curve, how one genotype's behaviour changes along one environmental axis, is Woltereck's norm of reaction.</span></li>
-      <li><span>Untick <b>Show genotypes</b> and set any corner. With all dots the same grey you only see the phenotype, which is all a glass of fermented tea ever shows you. The genotype is still there, deciding who does what.</span></li>
-      <li><span>Finally, replace the words. Temperature and music are temperature and dissolved oxygen. Ravers and talkers are <i>Saccharomyces</i> and a lactic acid bacterium. Beer is ethanol, sweat is acidity. The booth is the brewer.</span></li>
-    </ol>
-  </section>
-
-  <p class="foot">Sources: R. Woltereck, “Weitere experimentelle Untersuchungen über Artveränderung, speziell über das Wesen quantitativer Artunterschiede bei Daphniden”, Verhandlungen der Deutschen Zoologischen Gesellschaft 19, 110–173 (1909); W. Johannsen, “The genotype conception of heredity”, The American Naturalist 45, 129–159 (1911). The simulation is an agent-based toy with no claim to realism; every number in it was chosen to make the idea visible. The code in this repository was generated with Claude (Anthropic).</p>
 </main>
 
 <script>
@@ -176,15 +141,11 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
   const $ = id => document.getElementById(id);
   const cv = $('club'), ctx = cv.getContext('2d');
   const tempIn = $('temp'), musicIn = $('music');
-  const showG = $('showg');
 
   // Genotypes: fixed preferences a person is born with.
-  const GENO = {
-    raver:  { color:'#4ea1ff', music:0.9, heat:0.95, label:'raver' },
-    talker: { color:'#ff8a4e', music:0.15, heat:0.35, label:'talker' },
-    swayer: { color:'#5fd08a', music:0.5, heat:0.6,  label:'swayer' }
-  };
-  const TYPES = ['raver','talker','swayer'];
+  // One genotype for everybody: the whole room is a clone.
+  const GENO = { one: { color:'#8fb8ff', music:0.6, heat:0.6, label:'one' } };
+  const TYPES = ['one'];
 
   // World geometry in unit coordinates (0..1), scaled at draw time.
   const FLOOR = {x0:0.04, y0:0.06, x1:0.70, y1:0.86};
@@ -206,9 +167,9 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
       vx: 0, vy: 0,
       phase: rnd(0, Math.PI*2),
       // individual variation around the genotype
-      music: clamp(g.music + rnd(-0.12, 0.12), 0, 1),
-      heat:  clamp(g.heat  + rnd(-0.12, 0.12), 0, 1),
-      thirst: rnd(0, 0.5),
+      music: clamp(g.music + rnd(-0.05, 0.05), 0, 1),
+      heat:  clamp(g.heat  + rnd(-0.05, 0.05), 0, 1),
+      thirst: rnd(0, 0.9),
       discomfort: 0,
       state: 'floor',       // floor | tobar | bar | tofloor | leaving
       wait: 0,
@@ -221,7 +182,7 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
 
   function reset(){
     people = []; beers = 0; left = 0; t = 0; beerLog = [];
-    for (let i=0;i<60;i++) people.push(makePerson(TYPES[i%3], false));
+    for (let i=0;i<60;i++) people.push(makePerson('one', false));
   }
 
   // Environment in 0..1
@@ -234,7 +195,7 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
   function step(dt){
     const {T, M} = env();
     t += dt;
-    let onFloor = 0, atBar = 0, sweatSum = 0, happySum = 0, n = 0;
+    let onFloor = 0, atBar = 0, dancing = 0, sweatSum = 0, happySum = 0, n = 0;
 
     for (const p of people){
       // comfort with music and heat, 0..1
@@ -246,7 +207,7 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
       p.intensity = clamp(M * (0.35 + 0.65*cm) * (p.state==='floor' ? 1 : 0.2), 0, 1);
       p.sweat = clamp(T * (0.25 + 0.9*p.intensity), 0, 1);
       // thirst builds with heat and effort
-      p.thirst += dt * (0.004 + 0.022*T + 0.02*p.intensity);
+      p.thirst += dt * (0.001 + 0.03*T*T + 0.025*p.intensity);
       // discomfort accumulates when comfort is low
       p.discomfort += dt * ((0.5 - comfort) * 0.5);
       p.discomfort = clamp(p.discomfort, 0, 2);
@@ -256,7 +217,7 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
         if (p.discomfort > 1.5 && Math.random() < dt*0.5){ p.state = 'leaving'; }
         else if (p.thirst > 1 && Math.random() < dt*1.5){ p.state = 'tobar'; p.tx = rnd(BAR.x0-0.03, BAR.x0+0.0); p.ty = rnd(BAR.y0+0.04, BAR.y1-0.04); }
       } else if (p.state === 'tobar'){
-        if (near(p, p.tx, p.ty)) { p.state = 'bar'; p.wait = rnd(4, 8); }
+        if (near(p, p.tx, p.ty)) { p.state = 'bar'; p.wait = rnd(2, 4); }
       } else if (p.state === 'bar'){
         p.wait -= dt;
         if (p.wait <= 0){ beers++; beerLog.push(t); p.thirst = 0; p.state = 'tofloor'; p.hx = rnd(FLOOR.x0+0.04, FLOOR.x1-0.04); p.hy = rnd(FLOOR.y0+0.04, FLOOR.y1-0.04); }
@@ -286,7 +247,7 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
       p.x += p.vx*dt; p.y += p.vy*dt;
       p.phase += dt * (2 + 10*p.intensity);
 
-      if (p.state === 'floor'){ onFloor++; sweatSum += p.sweat; }
+      if (p.state === 'floor'){ onFloor++; sweatSum += p.sweat; if (p.intensity > 0.45) dancing++; }
       if (p.state === 'bar' || p.state === 'tobar') atBar++;
       happySum += comfort; n++;
     }
@@ -299,22 +260,19 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
     // arrivals follow the mood inside, capped
     const mood = n ? happySum/n : 0.5;
     if (people.length < 70 && Math.random() < dt * (0.05 + 0.7*mood*mood)){
-      people.push(makePerson(TYPES[Math.floor(Math.random()*3)], true));
+      people.push(makePerson('one', true));
     }
 
     // readouts
     const win = 20; // seconds window for the beer rate
     beerLog = beerLog.filter(s => t - s < win);
     const bpm = beerLog.length * (60/win);
-    $('r-floor').textContent = onFloor;
+    $('r-in').textContent = people.filter(p => p.state !== 'leaving').length;
+    $('r-dance').textContent = dancing;
     $('r-bar').textContent = atBar;
-    $('r-beer').textContent = beers;
     $('r-bpm').textContent = bpm.toFixed(1);
     $('r-sweat').textContent = Math.round(onFloor ? 100*sweatSum/onFloor : 0) + ' %';
     $('r-left').textContent = left;
-    const cnt = {raver:0, talker:0, swayer:0};
-    for (const p of people) if (p.state !== 'leaving') cnt[p.type]++;
-    $('r-raver').textContent = cnt.raver; $('r-talker').textContent = cnt.talker; $('r-swayer').textContent = cnt.swayer;
   }
   function near(p, x, y){ return Math.hypot(p.x-x, p.y-y) < 0.02; }
 
@@ -358,7 +316,6 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
     ctx.fillText('BOOTH · you are here', FLOOR.x0*W+8, H-16);
 
     // people
-    const g = showG.checked;
     for (const p of people){
       const x = p.x*W, y = p.y*H;
       const bounce = p.state==='floor' ? Math.sin(p.phase)*2*p.intensity : 0;
@@ -368,7 +325,7 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
         ctx.fillStyle = `rgba(190,220,255,${0.08 + 0.22*p.sweat})`; ctx.fill();
       }
       ctx.beginPath(); ctx.arc(x, y+bounce, r, 0, Math.PI*2);
-      let col = g ? p.g.color : '#cfd6de';
+      let col = p.g.color;
       ctx.fillStyle = col; ctx.globalAlpha = 0.55 + 0.45*(p.state==='floor' ? p.intensity : 0.3); ctx.fill();
       ctx.globalAlpha = 1;
       if (p.state === 'bar'){ ctx.fillStyle = '#f3c969'; ctx.fillRect(x+r+2, y-3, 3, 6); }
